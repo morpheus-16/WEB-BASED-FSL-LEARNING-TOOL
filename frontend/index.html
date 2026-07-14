@@ -6,6 +6,38 @@
   <title>FSL Learn — Filipino Sign Language Vocabulary Tool</title>
   <link rel="stylesheet" href="/css/styles.css" />
   <link rel="icon" href="/assets/logo.svg" />
+  <style>
+    .hero {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url("/assets/hero-bg.jpg") center center / cover no-repeat;
+      opacity: 0.7;
+      filter: blur(4px);
+      transform: scale(1.05);
+      z-index: -2;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(248, 250, 252, 0.55) 0%,
+        rgba(248, 250, 252, 0.75) 100%
+      );
+      z-index: -1;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar">
@@ -55,33 +87,19 @@
 
     <div class="modules-grid">
       <div class="card-3d module-card">
-        <div class="module-icon" style="background: linear-gradient(135deg, rgba(233,69,96,0.3), rgba(123,44,191,0.3));">👩‍🏫</div>
-        <h3>Teacher Dashboard</h3>
-        <p>Create classrooms, generate join codes, monitor every student’s lesson progress and quiz scores in real time.</p>
-        <div class="module-meta">
-          <span>Classroom management</span>
-          <span class="badge-pill">Progress tracking</span>
-        </div>
+        <div class="module-icon">👩‍🏫</div>
+        <h3>Teachers</h3>
+        <p>Create classrooms, add students, and track Alphabet, Basic, and Intermediate progress.</p>
       </div>
-
       <div class="card-3d module-card">
         <div class="module-icon">👨‍🎓</div>
-        <h3>Student Learning Panel</h3>
-        <p>Watch sign videos, study vocabulary by level, complete lessons, and take quizzes that unlock the next stage.</p>
-        <div class="module-meta">
-          <span>Lessons + Videos</span>
-          <span class="badge-pill">Quizzes</span>
-        </div>
+        <h3>Students</h3>
+        <p>Learn FSL through lessons, fun quizzes, and clear progress in your classroom.</p>
       </div>
-
       <div class="card-3d module-card">
         <div class="module-icon">🔤</div>
         <h3>Alphabet Practice</h3>
-        <p>Starting point for recognition: practice A–Z handshapes. (Camera recognition for alphabets coming as the foundation.)</p>
-        <div class="module-meta">
-          <span>26 letters</span>
-          <span class="badge-pill badge-warn">Starting point</span>
-        </div>
+        <p>Learn A–Z handshapes with GIFs and a friendly recognition quiz.</p>
       </div>
     </div>
   </section>
@@ -119,13 +137,7 @@
 
   <script src="/js/app.js"></script>
   <script>
-    // if already logged in, go to dashboard
     document.addEventListener("DOMContentLoaded", () => {
-      const u = FSL.getUser();
-      if (u) {
-        // optional auto-redirect
-        // window.location.href = u.role === "teacher" ? "/teacher.html" : "/student.html";
-      }
       FSL.initTilt();
     });
   </script>
