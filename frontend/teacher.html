@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Dashboard · FSL Learn</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="icon" href="/assets/logo.svg" />
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/teacher.html" class="logo">
+        <div class="logo-icon"><img src="/assets/logo.svg" alt="FSL Learn" width="48" height="48" /></div>
+        <span>FSL <span class="brand-accent">Learn</span></span>
+      </a>
+      <div id="navbar-right" class="flex gap-1" style="align-items:center"></div>
+    </div>
+  </nav>
+
+  <div class="dashboard">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="#" class="active" data-view="content" onclick="showView('content', this)"><span class="icon">📚</span> FSL Lessons</a></li>
+        <li><a href="#" data-view="classrooms" onclick="showView('classrooms', this)"><span class="icon">🏫</span> Classrooms</a></li>
+        <li><a href="#" data-view="profile" onclick="showView('profile', this)"><span class="icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-tip">
+        <strong>System Flow</strong>
+        Browse FSL Lessons · Demo Alphabet Recognition · Manage Classrooms & Students.
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div id="view-overview" class="hidden">
+        <div class="page-header">
+          <div>
+            <h1>Welcome, <span id="teacher-name">Teacher</span></h1>
+            <p>Track student vocabulary progress and manage your FSL classrooms.</p>
+          </div>
+          <button class="btn" onclick="showView('classrooms'); openCreateModal()">+ New Classroom</button>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="label">Classrooms</div><div class="value" id="stat-classrooms">—</div></div>
+          <div class="stat-card"><div class="label">Total Students</div><div class="value" id="stat-students">—</div></div>
+          <div class="stat-card"><div class="label">Avg Progress</div><div class="value" id="stat-progress">—</div></div>
+          <div class="stat-card"><div class="label">Content Modules</div><div class="value">3</div></div>
+        </div>
+        <h2 style="margin-bottom:1rem;">Your Classrooms</h2>
+        <div class="classroom-grid" id="overview-classrooms"></div>
+      </div>
+
+      <div id="view-classrooms" class="hidden">
+        <div class="page-header">
+          <div><h1>Classrooms</h1><p>Create classrooms, add students, and track Alphabet / Basic / Intermediate progress.</p></div>
+          <div class="flex gap-1">
+            <button class="btn btn-ghost" type="button" onclick="openStudentsPanel()">Student progress</button>
+            <button class="btn" onclick="openCreateModal()">+ Create Classroom</button>
+          </div>
+        </div>
+        <div class="classroom-grid" id="classrooms-list"></div>
+      </div>
+
+      <div id="view-students" class="hidden">
+        <div class="page-header">
+          <div><h1>Students & Progress</h1><p>Create student accounts and track progress. Students cannot self-register.</p></div>
+          <select class="form-control" id="classroom-select" style="width:auto; min-width:200px" onchange="loadStudents()"></select>
+            <button class="btn" type="button" onclick="openAddStudentModal()">+ Add Student</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Student</th><th colspan="4">Progress (Alphabet · Basic · Intermediate)</th><th>Last Activity</th></tr>
+            </thead>
+            <tbody id="students-tbody">
+              <tr><td colspan="6" class="text-center text-muted">Select a classroom</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="view-content">
+        <div class="page-header">
+          <div><h1>FSL Lessons</h1><p>Browse Alphabet, Basic, and Intermediate lessons (pre-defined content).</p></div>
+        </div>
+        <div class="modules-grid" id="content-modules"></div>
+        <div id="content-lessons" class="mt-3"></div>
+      </div>
+
+      <div id="view-recognize" class="hidden">
+        <div class="page-header">
+          <div>
+            <h1>Alphabet Recognition</h1>
+            <p>Open webcam, perform FSL alphabet signs, view recognized letter and accuracy. For classroom demonstration.</p>
+          </div>
+          <div class="flex gap-1">
+            <button class="btn" id="btn-start-cam" onclick="startRecognition()">Start Camera</button>
+            <button class="btn btn-ghost" id="btn-stop-cam" onclick="stopRecognition()" disabled>Stop</button>
+          </div>
+        </div>
+        <div class="recog-layout">
+          <div>
+            <div class="camera-box" id="camera-box">
+              <video id="input-video" playsinline></video>
+              <canvas id="output-canvas"></canvas>
+              <div id="cam-placeholder" style="position:absolute;inset:0;display:grid;place-items:center;color:#8aa8c0;text-align:center;padding:1.5rem;background:#0f1c2a;">
+                <div>
+                  <div style="font-size:2.5rem;margin-bottom:0.5rem">📷</div>
+                  <p>Click <strong>Start Camera</strong> to begin live recognition</p>
+                  <p style="font-size:0.85rem;opacity:0.7;margin-top:0.4rem">Allow camera access when prompted</p>
+                </div>
+              </div>
+            </div>
+            <p class="text-muted mt-1" style="font-size:0.85rem;">Tip: Hold your hand steady, well lit, and fill a good portion of the frame. J and Z are motion signs and may be less accurate.</p>
+          </div>
+          <div class="card recog-result">
+            <div class="recog-status" id="recog-status">Ready</div>
+            <div class="recog-letter" id="recog-letter">—</div>
+            <div class="recog-conf" id="recog-conf">Confidence: —</div>
+            <div class="recog-bar"><div class="fill" id="recog-bar-fill" style="width:0%"></div></div>
+            <div class="recog-top" id="recog-top"></div>
+          </div>
+        </div>
+      </div>
+    
+      <div id="view-profile" class="hidden">
+        <div class="page-header">
+          <div><h1>Profile</h1><p>View and update your account information.</p></div>
+        </div>
+        <div class="card" style="padding:1.5rem;max-width:480px">
+          <div class="form-group"><label>Full Name</label><input class="form-control" id="prof-name" /></div>
+          <div class="form-group"><label>Username</label><input class="form-control" id="prof-user" disabled /></div>
+          <div class="form-group"><label>Email</label><input class="form-control" id="prof-email" /></div>
+          <div class="form-group"><label>New Password (optional)</label><input type="password" class="form-control" id="prof-pass" placeholder="Leave blank to keep" /></div>
+          <button class="btn" onclick="saveProfile()">Save Changes</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div id="modal-create" class="modal-overlay hidden" style="display:none;">
+    <div class="modal-card">
+      <h2 style="margin-bottom:1.15rem;">Create Classroom</h2>
+      <form onsubmit="createClassroom(event)">
+        <div class="form-group">
+          <label>Classroom Name</label>
+          <input class="form-control" name="name" required placeholder="e.g. Grade 4 - Faith" />
+        </div>
+        <div class="form-group">
+          <label>Description (optional)</label>
+          <input class="form-control" name="description" placeholder="FSL for beginners" />
+        </div>
+        <div class="flex gap-1" style="justify-content:flex-end">
+          <button type="button" class="btn btn-ghost" onclick="closeCreateModal()">Cancel</button>
+          <button type="submit" class="btn">Create & Get Code</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    const user = FSL.requireAuth("teacher");
+    if (!user) throw new Error("redirect");
+    FSL.renderNavbar(user);
+    document.getElementById("teacher-name").textContent = user.full_name?.split(" ")[0] || user.username;
+
+    let classrooms = [];
+    let selectedClassroomId = null;
+    let hands = null;
+    let camera = null;
+    let recognizing = false;
+    let lastSend = 0;
+    const SEND_INTERVAL_MS = 350;
+
+    async function loadOverview() {
+      classrooms = await FSL.api("/classrooms/mine");
+      document.getElementById("stat-classrooms").textContent = classrooms.length;
+      let totalStudents = 0, totalProgress = 0, progressCount = 0;
+      const grid = document.getElementById("overview-classrooms");
+      grid.innerHTML = "";
+      if (!classrooms.length) {
+        grid.innerHTML = `<div class="card" style="padding:2rem;text-align:center;grid-column:1/-1">
+          <p class="text-muted">No classrooms yet. Create one to get a join code for students.</p>
+          <button class="btn mt-2" onclick="openCreateModal()">Create your first classroom</button>
+        </div>`;
+      }
+      for (const c of classrooms) {
+        const students = await FSL.api(`/classrooms/${c.id}/students`).catch(() => []);
+        totalStudents += students.length;
+        students.forEach((s) => {
+          totalProgress += s.progress?.progress_percent || 0;
+          progressCount++;
+        });
+        const card = document.createElement("div");
+        card.className = "classroom-card";
+        card.innerHTML = `
+          <h3>${escapeHtml(c.name)}</h3>
+          <p>${escapeHtml(c.description || "No description")}</p>
+          <div class="code-pill" title="Share this code">🔑 ${c.code}</div>
+          <div class="flex gap-1 mt-2" style="justify-content:space-between;align-items:center">
+            <span class="text-muted" style="font-size:0.85rem">${students.length} student${students.length !== 1 ? "s" : ""}</span>
+            <button class="btn btn-sm btn-secondary" onclick="viewClassroom(${c.id})">View Progress</button>
+          </div>`;
+        grid.appendChild(card);
+      }
+      document.getElementById("stat-students").textContent = totalStudents;
+      document.getElementById("stat-progress").textContent = progressCount ? Math.round(totalProgress / progressCount) + "%" : "0%";
+      document.getElementById("classrooms-list").innerHTML = grid.innerHTML;
+      const sel = document.getElementById("classroom-select");
+      sel.innerHTML = `<option value="">Select classroom…</option>` + classrooms.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+      if (selectedClassroomId) sel.value = selectedClassroomId;
+    }
+
+    function viewClassroom(id) {
+      selectedClassroomId = id;
+      document.getElementById("classroom-select").value = id;
+      showView("students");
+      loadStudents();
+    }
+
+    async function loadStudents() {
+      const id = document.getElementById("classroom-select").value;
+      const tbody = document.getElementById("students-tbody");
+      if (!id) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Select a classroom</td></tr>`;
+        return;
+      }
+      selectedClassroomId = +id;
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center"><div class="spinner" style="margin:1rem auto"></div></td></tr>`;
+      try {
+        const students = await FSL.api(`/classrooms/${id}/students`);
+        if (!students.length) {
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No students have joined yet. Share the classroom code!</td></tr>`;
+          return;
+        }
+        // Build per-module progress for each student
+        let modules = [];
+        try { modules = await FSL.api("/modules"); } catch (_) {}
+        const lessonMap = {};
+        for (const m of modules) {
+          try {
+            const ls = await FSL.api("/lessons?module=" + m.id);
+            lessonMap[m.id] = { title: m.title, ids: ls.map((l) => l.id) };
+          } catch (_) {
+            lessonMap[m.id] = { title: m.id, ids: [] };
+          }
+        }
+        tbody.innerHTML = students.map((s) => {
+          const p = s.progress || {};
+          const completed = new Set(p.completed_lessons || []);
+          const bars = Object.keys(lessonMap).map((mid) => {
+            const info = lessonMap[mid];
+            const done = info.ids.filter((id) => completed.has(id)).length;
+            const pct = info.ids.length ? Math.round((done / info.ids.length) * 100) : 0;
+            return `<div style="margin-bottom:0.4rem;min-width:120px">
+              <div style="display:flex;justify-content:space-between;font-size:0.8rem">
+                <span class="text-muted">${info.title}</span><span>${pct}%</span>
+              </div>
+              <div class="progress-bar" style="height:8px;margin:0.15rem 0">
+                <div class="fill" style="width:${pct}%;background:${FSL.progressColor(pct)}"></div>
+              </div>
+            </div>`;
+          }).join("");
+          return `<tr>
+            <td><div class="flex gap-1" style="align-items:center">
+              <div class="avatar">${s.avatar || "?"}</div>
+              <div><strong>${escapeHtml(s.full_name)}</strong><br><span class="text-muted" style="font-size:0.8rem">@${escapeHtml(s.username)}</span></div>
+            </div></td>
+            <td colspan="4">${bars || "—"}</td>
+            <td class="text-muted" style="font-size:0.85rem">${FSL.formatDate(p.last_activity)}</td>
+          </tr>`;
+        }).join("");
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="color:var(--danger)">${e.message}</td></tr>`;
+      }
+    }
+
+    async function loadContent() {
+      const box = document.getElementById("content-modules");
+      if (!box) return;
+      box.innerHTML = `<div class="text-muted" style="padding:1rem">Loading lessons…</div>`;
+      try {
+        const modules = await FSL.api("/modules");
+        if (!modules || !modules.length) {
+          box.innerHTML = `<p class="text-muted">No modules available.</p>`;
+          return;
+        }
+        box.innerHTML = modules.map((m) => `
+          <div class="module-card" onclick="showModuleLessons('${m.id}')">
+            <div class="module-icon">${m.icon || "📚"}</div>
+            <h3>${m.title}</h3>
+            <p>${m.description || ""}</p>
+            <div class="module-meta"><span>${m.total_lessons || 0} lessons</span><span class="badge-pill">${m.subtitle || m.id}</span></div>
+          </div>`).join("");
+      } catch (e) {
+        box.innerHTML = `<p style="color:var(--danger)">Could not load lessons: ${e.message}</p>`;
+        console.error(e);
+      }
+    }
+
+    async function showModuleLessons(moduleId) {
+      const lessons = await FSL.api(`/lessons?module=${moduleId}`);
+      document.getElementById("content-lessons").innerHTML = `
+        <h2 style="margin:1.5rem 0 1rem">${moduleId.charAt(0).toUpperCase() + moduleId.slice(1)} Lessons</h2>
+        <div class="lessons-grid">
+          ${lessons.map((l) => `
+            <div class="lesson-card">
+              <span class="badge">${l.sign || l.title}</span>
+              <h4>${escapeHtml(l.title)}</h4>
+              <p>${escapeHtml(l.description)}</p>
+              <div class="text-muted" style="font-size:0.8rem">~${l.estimated_minutes} min · Difficulty ${l.difficulty}/3</div>
+            </div>`).join("")}
+        </div>`;
+    }
+
+    function setRecogStatus(text, cls) {
+      const el = document.getElementById("recog-status");
+      el.textContent = text;
+      el.className = "recog-status" + (cls ? " " + cls : "");
+    }
+
+    async function startRecognition() {
+      if (recognizing) return;
+      const video = document.getElementById("input-video");
+      const placeholder = document.getElementById("cam-placeholder");
+      setRecogStatus("Starting camera…");
+      document.getElementById("btn-start-cam").disabled = true;
+      try {
+        hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+        hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
+        hands.onResults(onHandResults);
+        camera = new Camera(video, {
+          onFrame: async () => { if (hands && recognizing) await hands.send({ image: video }); },
+          width: 640, height: 480,
+        });
+        await camera.start();
+        recognizing = true;
+        placeholder.style.display = "none";
+        document.getElementById("btn-stop-cam").disabled = false;
+        setRecogStatus("● Live", "live");
+        FSL.toast("Camera started — show a letter handshape");
+      } catch (err) {
+        console.error(err);
+        setRecogStatus("Camera error", "error");
+        document.getElementById("btn-start-cam").disabled = false;
+        FSL.toast("Could not access camera: " + err.message, "error");
+      }
+    }
+
+    function stopRecognition() {
+      recognizing = false;
+      if (camera) { try { camera.stop(); } catch (_) {} camera = null; }
+      hands = null;
+      const video = document.getElementById("input-video");
+      if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
+      document.getElementById("cam-placeholder").style.display = "grid";
+      document.getElementById("btn-start-cam").disabled = false;
+      document.getElementById("btn-stop-cam").disabled = true;
+      setRecogStatus("Stopped");
+      document.getElementById("recog-letter").textContent = "—";
+      document.getElementById("recog-conf").textContent = "Confidence: —";
+      document.getElementById("recog-bar-fill").style.width = "0%";
+      document.getElementById("recog-top").innerHTML = "";
+    }
+
+    function onHandResults(results) {
+      const canvas = document.getElementById("output-canvas");
+      const video = document.getElementById("input-video");
+      const ctx = canvas.getContext("2d");
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const landmarks = results.multiHandLandmarks[0];
+        if (typeof drawConnectors === "function") {
+          drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: "#5eb0e0", lineWidth: 2 });
+          drawLandmarks(ctx, landmarks, { color: "#2b7bb9", lineWidth: 1, radius: 3 });
+        }
+        const now = Date.now();
+        if (now - lastSend >= SEND_INTERVAL_MS) {
+          lastSend = now;
+          const flat = [];
+          for (const lm of landmarks) flat.push(lm.x, lm.y, lm.z);
+          sendLandmarks(flat);
+        }
+      } else {
+        document.getElementById("recog-letter").textContent = "—";
+        document.getElementById("recog-conf").textContent = "No hand detected";
+        document.getElementById("recog-bar-fill").style.width = "0%";
+      }
+      ctx.restore();
+    }
+
+    async function sendLandmarks(flat) {
+      try {
+        const res = await FSL.api("/recognize", { method: "POST", body: { landmarks: flat } });
+        document.getElementById("recog-letter").textContent = res.letter || "?";
+        const confPct = Math.round((res.confidence || 0) * 100);
+        document.getElementById("recog-conf").textContent = "Confidence: " + confPct + "%";
+        document.getElementById("recog-bar-fill").style.width = confPct + "%";
+        if (res.top && res.top.length) {
+          document.getElementById("recog-top").innerHTML =
+            '<div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;text-align:left">Top predictions</div>' +
+            res.top.map((t) => `<div class="recog-top-item"><span><strong>${t.letter}</strong></span><span>${Math.round(t.confidence * 100)}%</span></div>`).join("");
+        }
+      } catch (e) { console.warn("recognize error", e); }
+    }
+
+    function loadProfile() {
+      const u = FSL.user || {};
+      const n = document.getElementById("prof-name");
+      const un = document.getElementById("prof-user");
+      const em = document.getElementById("prof-email");
+      if (n) n.value = u.full_name || "";
+      if (un) un.value = u.username || "";
+      if (em) em.value = u.email || "";
+    }
+    function saveProfile() { FSL.toast("Profile saved (demo)", "success"); }
+    function logout() {
+      if (typeof recognizing !== "undefined" && recognizing) stopRecognition();
+      localStorage.removeItem("fsl_token");
+      localStorage.removeItem("fsl_user");
+      location.href = "/login.html";
+    }
+    function showView(name, el) {
+      if (name !== "recognize" && recognizing) stopRecognition();
+      ["content", "classrooms", "profile", "overview", "students", "recognize"].forEach((v) => {
+        document.getElementById("view-" + v).classList.toggle("hidden", v !== name);
+      });
+      document.querySelectorAll(".sidebar-nav a").forEach((a) => a.classList.remove("active"));
+      if (el) el.classList.add("active");
+      else {
+        const link = document.querySelector('.sidebar-nav a[data-view="' + name + '"]');
+        if (link) link.classList.add("active");
+      }
+      if (name === "content") loadContent();
+      if (name === "profile") loadProfile();
+      if (name === "students" && selectedClassroomId) loadStudents();
+    }
+
+    
+    function regenStudentCreds() {
+      const u = "stu" + Math.random().toString(36).slice(2, 8);
+      const p = Math.random().toString(36).slice(-10);
+      const ue = document.getElementById("stu-user");
+      const pe = document.getElementById("stu-pass");
+      if (ue) ue.value = u;
+      if (pe) pe.value = p;
+    }
+    function openAddStudentModal() {
+      regenStudentCreds();
+
+      const sel = document.getElementById("classroom-select");
+      if (!sel || !sel.value) { FSL.toast("Select a classroom first", "error"); return; }
+      document.getElementById("created-creds").classList.add("hidden");
+      const m = document.getElementById("modal-add-student");
+      m.classList.remove("hidden"); m.style.display = "grid";
+    }
+    function closeAddStudentModal() {
+      const m = document.getElementById("modal-add-student");
+      m.classList.add("hidden"); m.style.display = "none";
+    }
+    async function createStudent(e) {
+      e.preventDefault();
+      const cid = document.getElementById("classroom-select").value;
+      if (!cid) { FSL.toast("Select a classroom first", "error"); return; }
+      const fd = new FormData(e.target);
+      try {
+        const res = await FSL.api(`/classrooms/${cid}/students`, {
+          method: "POST",
+          body: {
+            full_name: fd.get("full_name"),
+            username: fd.get("username"),
+            password: fd.get("password"),
+            email: fd.get("email") || null,
+          },
+        });
+        const box = document.getElementById("created-creds");
+        box.classList.remove("hidden");
+        box.innerHTML = `<strong>Share these credentials with the student:</strong><br>
+          Username: <code>${res.credentials.username}</code><br>
+          Password: <code>${res.credentials.password}</code>`;
+        FSL.toast("Student created and enrolled");
+        e.target.reset();
+        loadStudents();
+      } catch (err) { FSL.toast(err.message, "error"); }
+    }
+
+    function openStudentsPanel() {
+      const sel = document.getElementById("classroom-select");
+      // populate select from teacher classrooms
+      loadOverview().then(() => {
+        showView("students");
+        const first = document.getElementById("classroom-select");
+        if (first && first.options.length) loadStudents();
+      });
+    }
+    function openCreateModal() {
+      const m = document.getElementById("modal-create");
+      m.classList.remove("hidden");
+      m.style.display = "grid";
+    }
+    function closeCreateModal() {
+      const m = document.getElementById("modal-create");
+      m.classList.add("hidden");
+      m.style.display = "none";
+    }
+
+    async function createClassroom(e) {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      try {
+        const c = await FSL.api("/classrooms", { method: "POST", body: { name: fd.get("name"), description: fd.get("description") } });
+        FSL.toast("Classroom created! Code: " + c.code);
+        closeCreateModal();
+        e.target.reset();
+        await loadOverview();
+        showView("classrooms");
+      } catch (err) { FSL.toast(err.message, "error"); }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    loadOverview();
+    // Default tab = FSL Lessons — load content on first paint
+    loadContent();
+    showView('content');
+  </script>
+
+  <div id="modal-add-student" class="modal-overlay hidden" style="display:none">
+    <div class="modal-card">
+      <h2 style="margin-bottom:0.5rem">Add Student Account</h2>
+      <p class="text-muted" style="margin-bottom:1rem;font-size:0.95rem">Creates a login for the student and enrolls them in the selected classroom. Share the username & password with the student.</p>
+      <form onsubmit="createStudent(event)">
+        <div class="form-group"><label>Full Name</label><input class="form-control" name="full_name" required placeholder="Juan Dela Cruz" /></div>
+        <div class="form-group"><label>Username (auto)</label><input class="form-control" name="username" id="stu-user" required minlength="3" /></div>
+        <div class="form-group"><label>Password (auto)</label>
+          <div class="flex gap-1">
+            <input class="form-control" name="password" id="stu-pass" required minlength="4" />
+            <button type="button" class="btn btn-ghost" onclick="regenStudentCreds()">Regenerate</button>
+          </div>
+        </div>
+        <div class="form-group"><label>Email (optional)</label><input class="form-control" name="email" type="email" /></div>
+        <div class="flex gap-1" style="justify-content:flex-end;margin-top:1rem">
+          <button type="button" class="btn btn-ghost" onclick="closeAddStudentModal()">Cancel</button>
+          <button type="submit" class="btn">Create & Enroll</button>
+        </div>
+      </form>
+      <div id="created-creds" class="hidden mt-2" style="padding:1rem;background:var(--success-soft);border-radius:12px;border:1px solid #b5e5cf"></div>
+    </div>
+  </div>
+
+</body>
+</html>

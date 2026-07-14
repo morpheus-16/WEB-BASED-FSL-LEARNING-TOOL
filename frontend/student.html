@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student · FSL Learn</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="icon" href="/assets/logo.svg" />
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <style>
+    .camera-box { position: relative; overflow: hidden; border-radius: 16px; background: #0b1220; min-height: 280px; }
+    .camera-box video, .camera-box canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .camera-box canvas { position: absolute; inset: 0; pointer-events: none; }
+    .ring-overlay {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      pointer-events: none; z-index: 5;
+    }
+    .ring-overlay svg { width: 120px; height: 120px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.35)); }
+    .lesson-card { cursor: pointer; }
+    .lesson-card.locked { opacity: 0.55; cursor: not-allowed; }
+    .exam-locked { opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/student.html" class="logo">
+        <div class="logo-icon"><img src="/assets/logo.svg" alt="FSL Learn" width="48" height="48" /></div>
+        <span>FSL <span class="brand-accent">Learn</span></span>
+      </a>
+      <div id="navbar-right" class="flex gap-1" style="align-items:center"></div>
+    </div>
+  </nav>
+
+  <div class="dashboard">
+    <aside class="sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="#" class="active" data-view="learn" onclick="showView('learn', this)"><span class="icon">📚</span> FSL Lessons</a></li>
+        <li><a href="#" data-view="home" onclick="showView('home', this)"><span class="icon">🏫</span> My Classroom</a></li>
+        <li><a href="#" data-view="profile" onclick="showView('profile', this)"><span class="icon">👤</span> Profile</a></li>
+      </ul>
+      <div class="sidebar-tip">
+        <strong>Flow</strong>
+        1) Learn a sign  2) Pass the mini-quiz  3) Next sign! Big quiz opens when you finish them all.
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div id="view-home" class="hidden">
+        <div class="page-header">
+          <div>
+            <h1>Kamusta, <span id="student-name">Student</span>!</h1>
+            <p>This is your class! Your teacher put you here.</p>
+          </div>
+        </div>
+        <div class="join-banner">
+          <div>
+            <strong>My Classroom</strong>
+            <p class="text-muted" style="font-size:0.9rem;margin-top:0.2rem">Your teacher made your account — you're all set. No secret code needed!</p>
+          </div>
+        </div>
+        <div class="classroom-grid" id="my-classrooms"></div>
+      </div>
+
+      <div id="view-learn">
+        <div class="page-header">
+          <div>
+            <h1>FSL Lessons</h1>
+            <p>Learn signs step by step. Finish each lesson quiz to unlock the next adventure!</p>
+          </div>
+          <select class="form-control" id="learn-classroom" style="width:auto;min-width:200px" onchange="onClassroomChange()"></select>
+        </div>
+        <div class="modules-grid" id="learn-modules"><p class="text-muted">Loading…</p></div>
+        <div id="learn-lessons" class="mt-3"></div>
+        <div id="lesson-detail" class="hidden mt-3"></div>
+        <div id="module-quiz-area" class="mt-3"></div>
+      </div>
+
+      <div id="view-progress" style="display:none!important" class="hidden">
+        <div class="page-header">
+          <div><h1>Progress</h1><p>Three levels: Alphabet, Basic, Intermediate.</p></div>
+        </div>
+        <div id="progress-levels" class="modules-grid"></div>
+        <div id="progress-detail" class="mt-3"></div>
+      </div>
+
+      <div id="view-profile" class="hidden">
+        <div class="page-header"><div><h1>Profile</h1><p>Your account.</p></div></div>
+        <div class="card" style="padding:1.5rem;max-width:480px">
+          <div class="form-group"><label>Full Name</label><input class="form-control" id="prof-name" /></div>
+          <div class="form-group"><label>Username</label><input class="form-control" id="prof-user" disabled /></div>
+          <div class="form-group"><label>Email</label><input class="form-control" id="prof-email" /></div>
+          <button class="btn" type="button" onclick="FSL.toast('Saved (demo)','success')">Save</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    const user = FSL.requireAuth("student");
+    let classrooms = [];
+    let currentClassroomId = null;
+    let currentModule = null;
+    let moduleLessonList = [];
+    let completedSet = new Set();
+
+    // Camera (single instance — not destroyed between letters)
+    let hands = null, camera = null, recognizing = false, lastSend = 0;
+    const SEND_INTERVAL_MS = 300;
+    const HOLD_MS = 3000;
+    let holdStart = null;
+    let quizMode = null; // null | 'lesson' | 'module'
+    let quizTargetLetter = null;
+    let quizLessonId = null;
+    let moduleExamIndex = 0;
+    const ALPHA_LETTERS = "ABCDEFGHIKLMNOPQRSTUVWXY".split("");
+
+    if (user) {
+      document.getElementById("student-name").textContent = (user.full_name || "Student").split(" ")[0];
+      FSL.renderNavbar(user);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function showView(name, el) {
+      ["home", "learn", "profile"].forEach((v) => {
+        const n = document.getElementById("view-" + v);
+        if (n) n.classList.toggle("hidden", v !== name);
+      });
+      document.querySelectorAll(".sidebar-nav a[data-view]").forEach((a) => a.classList.remove("active"));
+      if (el) el.classList.add("active");
+      else {
+        const link = document.querySelector('.sidebar-nav a[data-view="' + name + '"]');
+        if (link) link.classList.add("active");
+      }
+      if (name === "home") loadHome();
+      if (name === "learn") loadLearnModules();
+      
+      if (name === "profile") {
+        const u = user || {};
+        document.getElementById("prof-name").value = u.full_name || "";
+        document.getElementById("prof-user").value = u.username || "";
+        document.getElementById("prof-email").value = u.email || "";
+      }
+    }
+
+    async function loadHome() {
+      try { classrooms = await FSL.api("/classrooms/mine"); } catch { classrooms = []; }
+      const grid = document.getElementById("my-classrooms");
+      if (!classrooms.length) {
+        grid.innerHTML = `<div class="card" style="padding:1.5rem"><p class="text-muted">You're not in a class yet. Ask your teacher to add you — they'll help!</p></div>`;
+      } else {
+        let modules = [];
+        try { modules = await FSL.api("/modules"); } catch (_) {}
+        const cards = [];
+        for (const c of classrooms) {
+          let completed = new Set();
+          try {
+            const prog = await FSL.api("/progress?classroom_id=" + c.id);
+            const p = Array.isArray(prog) ? prog[0] : prog;
+            completed = new Set(p && p.completed_lessons ? p.completed_lessons : []);
+          } catch (_) {}
+          const levels = [];
+          for (const m of modules) {
+            let lessons = [];
+            try { lessons = await FSL.api("/lessons?module=" + m.id); } catch (_) {}
+            const ids = lessons.map((l) => l.id);
+            const done = ids.filter((id) => completed.has(id)).length;
+            const pct = ids.length ? Math.round((done / ids.length) * 100) : 0;
+            levels.push(`<div style="margin-top:0.65rem">
+              <div class="flex" style="justify-content:space-between;font-size:0.9rem">
+                <span>${escapeHtml(m.title)}</span><strong>${pct}%</strong>
+              </div>
+              <div class="progress-bar" style="height:10px;margin-top:0.25rem"><div class="fill" style="width:${pct}%"></div></div>
+              <div class="text-muted" style="font-size:0.8rem">${done}/${ids.length} lessons passed</div>
+            </div>`);
+          }
+          cards.push(`<div class="classroom-card" style="cursor:default">
+            <h3>${escapeHtml(c.name)}</h3>
+            <p>${escapeHtml(c.description || "")}</p>
+            <p style="margin-top:0.5rem"><span class="text-muted">Your teacher:</span> <strong>${escapeHtml(c.teacher_name || "—")}</strong></p>
+            <span class="code-pill">${escapeHtml(c.code || "")}</span>
+            <hr style="margin:1rem 0;border:none;border-top:1px solid var(--border,#e5eaf0)" />
+            <strong style="font-size:0.95rem">Your learning progress</strong>
+            ${levels.join("") || "<p class='text-muted'>No modules</p>"}
+          </div>`);
+        }
+        grid.innerHTML = cards.join("");
+      }
+      const sel = document.getElementById("learn-classroom");
+      if (sel) {
+        sel.innerHTML = classrooms.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")
+          || `<option value="">No classroom</option>`;
+        if (classrooms.length && !currentClassroomId) {
+          currentClassroomId = classrooms[0].id;
+          sel.value = currentClassroomId;
+        }
+      }
+    }
+
+    function onClassroomChange() {
+      const v = document.getElementById("learn-classroom").value;
+      currentClassroomId = v ? +v : null;
+    }
+
+    async function refreshCompleted() {
+      completedSet = new Set();
+      if (!currentClassroomId) return;
+      try {
+        const prog = await FSL.api("/progress?classroom_id=" + currentClassroomId);
+        const p = Array.isArray(prog) ? prog[0] : prog;
+        completedSet = new Set(p && p.completed_lessons ? p.completed_lessons : []);
+      } catch (_) {}
+    }
+
+    async function loadLearnModules() {
+      const box = document.getElementById("learn-modules");
+      box.innerHTML = `<p class="text-muted">Loading…</p>`;
+      try {
+        const modules = await FSL.api("/modules");
+        box.innerHTML = (modules || []).map((m) => `
+          <div class="module-card" onclick="openModule('${m.id}')">
+            <div class="module-icon">${m.icon || "📚"}</div>
+            <h3>${escapeHtml(m.title)}</h3>
+            <p>${escapeHtml(m.description || "")}</p>
+            <div class="module-meta"><span>${m.total_lessons || 0} lessons</span>
+              <span class="badge-pill">${escapeHtml(m.subtitle || m.id)}</span></div>
+          </div>`).join("") || `<p class="text-muted">No modules</p>`;
+        document.getElementById("learn-lessons").innerHTML = "";
+        document.getElementById("lesson-detail").classList.add("hidden");
+        document.getElementById("module-quiz-area").innerHTML = "";
+        stopRecognition(true);
+      } catch (e) {
+        box.innerHTML = `<p style="color:var(--danger)">${escapeHtml(e.message)}</p>`;
+      }
+    }
+
+    async function openModule(moduleId) {
+      currentModule = moduleId;
+      stopRecognition(true);
+      quizMode = null;
+      await refreshCompleted();
+      const lessons = await FSL.api("/lessons?module=" + moduleId);
+      moduleLessonList = lessons.slice().sort((a, b) => (a.order || a.id) - (b.order || b.id));
+      const allDone = moduleLessonList.length > 0 && moduleLessonList.every((l) => completedSet.has(l.id));
+      const title = moduleId.charAt(0).toUpperCase() + moduleId.slice(1);
+      const isAlpha = moduleId === "alphabet";
+
+      document.getElementById("learn-lessons").innerHTML = `
+        <h2 style="margin-bottom:1rem">${title} Lessons</h2>
+        <p class="text-muted" style="margin-bottom:1rem">Tap a lesson, watch and practice, then try the quiz. You pass only when you get it right — you can do it!</p>
+        <div class="lessons-grid" id="lessons-grid">
+          ${moduleLessonList.map((l, idx) => {
+            const done = completedSet.has(l.id);
+            return `<div class="lesson-card ${done ? "completed" : ""}" data-id="${l.id}">
+              <span class="badge">${done ? "✓ Passed" : escapeHtml(l.sign || ("#" + (idx + 1)))}</span>
+              <h4>${escapeHtml(l.title)}</h4>
+              <p>${escapeHtml(l.description || "")}</p>
+              <div class="text-muted" style="font-size:0.8rem">Tap me to learn!</div>
+            </div>`;
+          }).join("")}
+        </div>
+        <div class="card mt-3 ${allDone ? "" : "exam-locked"}" style="padding:1.5rem" id="module-exam-card">
+          <h3 style="margin-bottom:0.5rem">Big level quiz</h3>
+          <p class="text-muted" style="margin-bottom:1rem">${
+            allDone
+              ? (isAlpha
+                  ? "You did every letter! Now sign them all in the big quiz (hold each one 3 seconds)."
+                  : "You finished the lessons! Now try the big multiple-choice quiz.")
+              : "Almost there! Pass every lesson quiz first (" + completedSet.size + " done)."
+          }</p>
+          <button class="btn" type="button" id="btn-module-exam" ${allDone ? "" : "disabled"}>
+            ${isAlpha ? "Start big alphabet quiz" : "Start big quiz"}
+          </button>
+        </div>`;
+      document.getElementById("lesson-detail").classList.add("hidden");
+      document.getElementById("module-quiz-area").innerHTML = "";
+      document.querySelectorAll("#lessons-grid .lesson-card").forEach((card) => {
+        card.addEventListener("click", () => openLesson(+card.dataset.id));
+      });
+      const examBtn = document.getElementById("btn-module-exam");
+      if (examBtn && allDone) {
+        examBtn.onclick = () => startModuleExam(moduleId);
+      }
+    }
+
+    async function openLesson(lessonId) {
+      stopRecognition(true);
+      quizMode = null;
+      const lesson = await FSL.api("/lessons/" + lessonId);
+      const detail = document.getElementById("lesson-detail");
+      detail.classList.remove("hidden");
+      const idx = moduleLessonList.findIndex((l) => l.id === lessonId);
+      const big = escapeHtml(lesson.sign || lesson.title || "");
+      detail.innerHTML = `
+        <div class="lesson-detail">
+          <div class="video-panel">
+            ${lesson.image_placeholder ? `<img src="${escapeHtml(lesson.image_placeholder)}" alt="${big}" style="max-width:100%;max-height:320px;border-radius:16px;display:block;margin:0 auto;background:#0b1220" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" />
+            <div class="placeholder" style="display:none">
+              <div style="font-size:4rem;font-weight:800;color:#fff">${big}</div>
+              <p class="text-muted" style="margin-top:0.75rem;font-size:0.9rem">Add a GIF at assets/signs/</p>
+            </div>` : `<div class="placeholder">
+              <div style="font-size:4rem;font-weight:800;color:#fff">${big}</div>
+              <p style="margin-top:0.5rem;opacity:0.9">${escapeHtml(lesson.description || "")}</p>
+              <p class="text-muted" style="margin-top:0.75rem;font-size:0.9rem">Picture or GIF of the sign goes here</p>
+            </div>`}
+          </div>
+          <div>
+            <span class="badge">${escapeHtml(lesson.module || "")} · Lesson ${idx + 1}/${moduleLessonList.length}</span>
+            <h2 style="margin:0.5rem 0">${escapeHtml(lesson.title)}</h2>
+            <p>${escapeHtml(lesson.description || "")}</p>
+            ${lesson.tips ? `<p class="mt-2"><strong>Tip:</strong> ${escapeHtml(lesson.tips)}</p>` : ""}
+            <p class="text-muted mt-2">Ready? Try the <strong>fun quiz</strong>! Pass it to star this lesson.</p>
+            <div class="flex gap-1 mt-3" style="flex-wrap:wrap">
+              <button class="btn" type="button" id="btn-lesson-quiz">I'm ready — quiz time!</button>
+              <button class="btn btn-ghost" type="button" onclick="document.getElementById('lesson-detail').classList.add('hidden')">Close</button>
+            </div>
+          </div>
+        </div>`;
+      detail.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById("btn-lesson-quiz").onclick = () => startLessonQuiz(lesson);
+    }
+
+    function startLessonQuiz(lesson) {
+      const area = document.getElementById("module-quiz-area");
+      document.getElementById("lesson-detail").classList.add("hidden");
+      if (lesson.module === "alphabet") {
+        // Per-letter recognition quiz
+        quizMode = "lesson";
+        quizLessonId = lesson.id;
+        quizTargetLetter = (lesson.sign || "").toUpperCase();
+        holdStart = null;
+        area.innerHTML = `
+          <div class="card" style="padding:1.5rem;margin-bottom:1rem">
+            <h2>Quiz time! Show letter <span style="color:var(--primary);font-size:2.5rem">${escapeHtml(quizTargetLetter)}</span></h2>
+            <p class="text-muted">Show the right hand sign and hold still. Watch the circle fill up (3 seconds). Only the correct letter works!</p>
+          </div>
+          ${cameraPanelHTML()}`;
+        area.scrollIntoView({ behavior: "smooth", block: "start" });
+        bindCameraButtons();
+        setTimeout(() => startRecognition(), 300);
+      } else {
+        // Per-lesson mini MCQ from module quiz bank filtered by hint
+        startLessonMcq(lesson);
+      }
+    }
+
+    function cameraPanelHTML() {
+      return `
+        <div class="recog-layout">
+          <div class="camera-box" id="quiz-camera-box">
+            <div class="placeholder" id="cam-placeholder" style="position:absolute;inset:0;display:grid;place-items:center;color:#b8cfe0;z-index:2">
+              <div><div style="font-size:2rem">📷</div>Start camera</div>
+            </div>
+            <video id="input-video" playsinline muted style="width:100%;min-height:280px;object-fit:cover"></video>
+            <canvas id="output-canvas"></canvas>
+            <div class="ring-overlay">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="8"/>
+                <circle id="hold-ring-fg" cx="50" cy="50" r="42" fill="none" stroke="#5eb0e0" stroke-width="8"
+                  stroke-linecap="round" transform="rotate(-90 50 50)"
+                  style="stroke-dasharray:264;stroke-dashoffset:264"/>
+              </svg>
+            </div>
+          </div>
+          <div class="card recog-result">
+            <div class="recog-status" id="recog-status">Turn on the camera, then show your sign!</div>
+            <div class="flex gap-1 mt-2" style="justify-content:center">
+              <button class="btn" type="button" id="btn-start-cam">Turn camera on</button>
+              <button class="btn btn-ghost" type="button" id="btn-stop-cam" disabled>Stop</button>
+            </div>
+            <p class="text-muted mt-2" style="font-size:0.9rem;text-align:center">Keep holding the right sign until the circle is full. You've got this!</p>
+          </div>
+        </div>`;
+    }
+
+    function bindCameraButtons() {
+      const bs = document.getElementById("btn-start-cam");
+      const be = document.getElementById("btn-stop-cam");
+      if (bs) bs.onclick = () => startRecognition();
+      if (be) be.onclick = () => stopRecognition(false);
+    }
+
+    function updateHoldRing(pct) {
+      const ring = document.getElementById("hold-ring-fg");
+      if (!ring) return;
+      const c = 2 * Math.PI * 42;
+      ring.style.strokeDasharray = c;
+      ring.style.strokeDashoffset = String(c * (1 - Math.min(1, Math.max(0, pct))));
+    }
+
+    async function markLessonPassed(lessonId, vocab) {
+      if (currentClassroomId) {
+        try {
+          await FSL.api("/progress/complete-lesson", {
+            method: "POST",
+            body: { classroom_id: currentClassroomId, lesson_id: lessonId, vocabulary: vocab || null },
+          });
+        } catch (e) { console.warn(e); }
+      }
+      completedSet.add(lessonId);
+      FSL.toast("Yay, you passed! Next sign coming up…");
+      stopRecognition(true);
+      // Proceed to next lesson in module (not back to list)
+      const idx = moduleLessonList.findIndex((l) => l.id === lessonId);
+      const next = idx >= 0 ? moduleLessonList[idx + 1] : null;
+      if (next) {
+        document.getElementById("module-quiz-area").innerHTML =
+          `<div class="card" style="padding:1rem;text-align:center" class="text-muted">Next lesson loading…</div>`;
+        setTimeout(() => openLesson(next.id), 600);
+      } else {
+        document.getElementById("module-quiz-area").innerHTML =
+          `<div class="card" style="padding:1.5rem;text-align:center">
+            <h3>Awesome — you finished every lesson in this level!</h3>
+            <p class="text-muted">Time for the big level quiz!</p>
+            <button class="btn mt-2" type="button" onclick="openModule('${currentModule}')">Start the big quiz</button>
+          </div>`;
+      }
+    }
+
+    async function loadProgressLevels() {
+      const box = document.getElementById("progress-levels");
+      if (!box) return;
+      box.innerHTML = `<p class="text-muted">Loading…</p>`;
+      try {
+        const modules = await FSL.api("/modules");
+        await refreshCompleted();
+        // Also pull full progress for quiz scores
+        let progList = [];
+        try {
+          const progs = await FSL.api("/progress");
+          progList = Array.isArray(progs) ? progs : progs ? [progs] : [];
+        } catch (_) {}
+        const p0 = progList[0] || {};
+        const completed = new Set(p0.completed_lessons || [...completedSet]);
+
+        box.innerHTML = (modules || []).map((m) => {
+          // count lessons completed for this module — fetch lesson ids
+          return `<div class="module-card" data-mid="${m.id}">
+            <div class="module-icon">${m.icon || "📚"}</div>
+            <h3>${escapeHtml(m.title)}</h3>
+            <p>Level progress</p>
+            <div class="progress-bar mt-2" style="height:12px"><div class="fill" id="prog-fill-${m.id}" style="width:0%"></div></div>
+            <div class="module-meta mt-1"><span id="prog-text-${m.id}">…</span></div>
+          </div>`;
+        }).join("");
+
+        for (const m of modules || []) {
+          const lessons = await FSL.api("/lessons?module=" + m.id);
+          const ids = lessons.map((l) => l.id);
+          const done = ids.filter((id) => completed.has(id)).length;
+          const pct = ids.length ? Math.round((done / ids.length) * 100) : 0;
+          const fill = document.getElementById("prog-fill-" + m.id);
+          const txt = document.getElementById("prog-text-" + m.id);
+          if (fill) fill.style.width = pct + "%";
+          if (txt) txt.textContent = done + " / " + ids.length + " lessons passed (" + pct + "%)";
+        }
+      } catch (e) {
+        box.innerHTML = `<p style="color:var(--danger)">${escapeHtml(e.message)}</p>`;
+      }
+    }
+
+    async function startLessonMcq(lesson) {
+      const area = document.getElementById("module-quiz-area");
+      // Build a simple 1-question quiz from lesson content
+      const correct = lesson.sign || lesson.title;
+      const others = moduleLessonList
+        .filter((l) => l.id !== lesson.id)
+        .map((l) => l.sign || l.title)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      const options = [correct, ...others].sort(() => Math.random() - 0.5);
+      area.innerHTML = `
+        <div class="quiz-question">
+          <div class="badge-pill">Mini-quiz</div>
+          <div class="video-panel" style="margin:1rem 0;min-height:140px">
+            <div class="placeholder">
+              <div style="font-size:2rem">🎬</div>
+              <div>Sign / video cue for this lesson</div>
+              <div class="text-muted" style="margin-top:0.35rem">${escapeHtml(lesson.description || "")}</div>
+            </div>
+          </div>
+          <h3>What does this sign mean?</h3>
+          <div class="options" id="lesson-mcq-opts">
+            ${options.map((o) => `<div class="option" data-opt="${escapeHtml(o)}">${escapeHtml(o)}</div>`).join("")}
+          </div>
+        </div>`;
+      area.querySelectorAll(".option").forEach((el) => {
+        el.addEventListener("click", () => {
+          if (el.dataset.opt === correct) {
+            markLessonPassed(lesson.id, correct);
+          } else {
+            FSL.toast("Not quite — try again! You can do it.", "error");
+            el.classList.add("wrong");
+          }
+        });
+      });
+    }
+
+    // ----- Big level quiz (only if all lessons passed) -----
+    function startModuleExam(moduleId) {
+      const allDone = moduleLessonList.every((l) => completedSet.has(l.id));
+      if (!allDone) {
+        FSL.toast("Pass all lesson quizzes first", "error");
+        return;
+      }
+      if (moduleId === "alphabet") {
+        quizMode = "module";
+        moduleExamIndex = 0;
+        quizTargetLetter = ALPHA_LETTERS[0];
+        holdStart = null;
+        const area = document.getElementById("module-quiz-area");
+        area.innerHTML = `
+          <div class="card" style="padding:1.5rem;margin-bottom:1rem">
+            <h2>Big level quiz — sign <span style="color:var(--primary);font-size:2.5rem" id="exam-letter">${quizTargetLetter}</span></h2>
+            <p class="text-muted">Letter <span id="exam-progress">1</span>/${ALPHA_LETTERS.length}. Hold correct sign 3 seconds.</p>
+          </div>
+          ${cameraPanelHTML()}`;
+        bindCameraButtons();
+        setTimeout(() => startRecognition(), 300);
+      } else {
+        startModuleMcqExam(moduleId);
+      }
+    }
+
+    async function startModuleMcqExam(moduleId) {
+      const area = document.getElementById("module-quiz-area");
+      try {
+        const quizzes = await FSL.api("/quizzes?module=" + moduleId);
+        if (!quizzes.length) {
+          area.innerHTML = `<p class="text-muted">No exam content yet.</p>`;
+          return;
+        }
+        const full = await FSL.api("/quizzes/" + quizzes[0].id);
+        window._mcq = { quiz: full, answers: {}, idx: 0 };
+        renderModuleMcq();
+      } catch (e) {
+        area.innerHTML = `<p style="color:var(--danger)">${escapeHtml(e.message)}</p>`;
+      }
+    }
+
+    function renderModuleMcq() {
+      const area = document.getElementById("module-quiz-area");
+      const st = window._mcq;
+      const qs = st.quiz.questions || [];
+      if (st.idx >= qs.length) {
+        let correct = 0;
+        qs.forEach((q) => { if (st.answers[q.id] === q.correct) correct++; });
+        const score = Math.round((correct / qs.length) * 100);
+        const pass = score >= (st.quiz.passing_score || 70);
+        area.innerHTML = `<div class="card" style="padding:2rem;text-align:center">
+          <h2>Score: ${score}%</h2>
+          <p class="text-muted">${pass ? "Passed module exam!" : "Not yet passing — review lessons."}</p>
+          <button class="btn mt-2" type="button" onclick="saveExamScore(${st.quiz.id},${score})">Save</button>
+        </div>`;
+        return;
+      }
+      const q = qs[st.idx];
+      area.innerHTML = `
+        <div class="quiz-question">
+          <div class="badge-pill">Exam Q ${st.idx + 1}/${qs.length}</div>
+          <div class="video-panel" style="margin:1rem 0;min-height:120px">
+            <div class="placeholder"><div style="font-size:2rem">🎬</div>
+              <div>${escapeHtml(q.sign_hint || "Sign cue")}</div></div>
+          </div>
+          <h3>${escapeHtml(q.question)}</h3>
+          <div class="options">
+            ${(q.options || []).map((o) =>
+              `<div class="option" data-qid="${escapeHtml(q.id)}" data-opt="${escapeHtml(o)}">${escapeHtml(o)}</div>`
+            ).join("")}
+          </div>
+        </div>`;
+      area.querySelectorAll(".option").forEach((el) => {
+        el.addEventListener("click", () => {
+          st.answers[el.dataset.qid] = el.dataset.opt;
+          st.idx++;
+          renderModuleMcq();
+        });
+      });
+    }
+
+    async function saveExamScore(quizId, score) {
+      try {
+        if (currentClassroomId) {
+          await FSL.api("/quizzes/submit", {
+            method: "POST",
+            body: { classroom_id: currentClassroomId, quiz_id: quizId, score, answers: window._mcq?.answers || {} },
+          });
+        }
+        FSL.toast("Exam saved: " + score + "%");
+      } catch (e) { FSL.toast(e.message, "error"); }
+    }
+
+    // ----- Camera -----
+    async function startRecognition() {
+      const video = document.getElementById("input-video");
+      if (!video) { FSL.toast("Camera panel not ready", "error"); return; }
+      if (recognizing) return;
+      const placeholder = document.getElementById("cam-placeholder");
+      const bs = document.getElementById("btn-start-cam");
+      const be = document.getElementById("btn-stop-cam");
+      if (bs) bs.disabled = true;
+      try {
+        // Always fresh Hands instance bound to current video element
+        if (camera) { try { camera.stop(); } catch (_) {} camera = null; }
+        hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+        hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
+        hands.onResults(onHandResults);
+        camera = new Camera(video, {
+          onFrame: async () => { if (hands && recognizing) await hands.send({ image: video }); },
+          width: 640, height: 480,
+        });
+        await camera.start();
+        recognizing = true;
+        if (placeholder) placeholder.style.display = "none";
+        if (be) be.disabled = false;
+        const st = document.getElementById("recog-status");
+        if (st) st.textContent = "● Live — hold correct letter";
+      } catch (err) {
+        console.error(err);
+        if (bs) bs.disabled = false;
+        FSL.toast("Camera: " + err.message, "error");
+      }
+    }
+
+    function stopRecognition(clearQuiz) {
+      recognizing = false;
+      holdStart = null;
+      updateHoldRing(0);
+      if (camera) { try { camera.stop(); } catch (_) {} camera = null; }
+      hands = null;
+      const video = document.getElementById("input-video");
+      if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach((t) => t.stop());
+        video.srcObject = null;
+      }
+      const placeholder = document.getElementById("cam-placeholder");
+      if (placeholder) placeholder.style.display = "grid";
+      const bs = document.getElementById("btn-start-cam");
+      const be = document.getElementById("btn-stop-cam");
+      if (bs) bs.disabled = false;
+      if (be) be.disabled = true;
+      if (clearQuiz) quizMode = null;
+    }
+
+    function onHandResults(results) {
+      const video = document.getElementById("input-video");
+      const canvas = document.getElementById("output-canvas");
+      if (!canvas || !video) return;
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // video only — no landmarks
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length) {
+        const now = Date.now();
+        if (now - lastSend >= SEND_INTERVAL_MS) {
+          lastSend = now;
+          const flat = [];
+          for (const lm of results.multiHandLandmarks[0]) flat.push(lm.x, lm.y, lm.z);
+          sendLandmarks(flat);
+        }
+      } else {
+        holdStart = null;
+        updateHoldRing(0);
+      }
+    }
+
+    async function sendLandmarks(flat) {
+      if (!quizMode || !quizTargetLetter) return;
+      try {
+        const res = await FSL.api("/recognize", { method: "POST", body: { landmarks: flat } });
+        const letter = (res.letter || "?").toString().toUpperCase();
+        const st = document.getElementById("recog-status");
+        // Only correct letter advances the ring — no confidence
+        if (letter === quizTargetLetter) {
+          if (!holdStart) holdStart = Date.now();
+          const elapsed = Date.now() - holdStart;
+          updateHoldRing(elapsed / HOLD_MS);
+          if (st) st.textContent = "Great! Hold still… " + quizTargetLetter + "… " + Math.min(3, elapsed / 1000).toFixed(1) + "s";
+          if (elapsed >= HOLD_MS) {
+            holdStart = null;
+            updateHoldRing(0);
+            if (quizMode === "lesson") {
+              await markLessonPassed(quizLessonId, quizTargetLetter);
+            } else if (quizMode === "module") {
+              moduleExamIndex++;
+              if (moduleExamIndex >= ALPHA_LETTERS.length) {
+                stopRecognition(true);
+                document.getElementById("module-quiz-area").innerHTML =
+                  `<div class="card" style="padding:2rem;text-align:center"><h2>Big level quiz complete!</h2>
+                   <button class="btn mt-2" type="button" onclick="saveExamScore(1,100)">Save 100%</button></div>`;
+              } else {
+                quizTargetLetter = ALPHA_LETTERS[moduleExamIndex];
+                const el = document.getElementById("exam-letter");
+                const pr = document.getElementById("exam-progress");
+                if (el) el.textContent = quizTargetLetter;
+                if (pr) pr.textContent = String(moduleExamIndex + 1);
+                if (st) st.textContent = "Next: " + quizTargetLetter;
+                FSL.toast("Correct! Next letter");
+                // keep camera running — do NOT re-render panel
+              }
+            }
+          }
+        } else {
+          holdStart = null;
+          updateHoldRing(0);
+          if (st) st.textContent = "Try letter " + quizTargetLetter + " (saw " + letter + ")";
+        }
+      } catch (e) { console.warn(e); }
+    }
+
+    function logout() {
+      stopRecognition(true);
+      FSL.logout();
+    }
+
+    loadHome().then(() => { showView("learn"); loadLearnModules(); });
+  </script>
+</body>
+</html>

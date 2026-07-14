@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "user_id": 2,
+    "classroom_id": 1,
+    "module": "alphabet",
+    "completed_lessons": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "current_lesson": 6,
+    "quiz_scores": {
+      "alphabet_quiz_1": 85
+    },
+    "vocabulary_mastered": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "last_activity": "2026-07-13T23:14:09.327247",
+    "progress_percent": 19
+  },
+  {
+    "id": 2,
+    "user_id": 3,
+    "classroom_id": 1,
+    "module": "alphabet",
+    "completed_lessons": [
+      1,
+      2
+    ],
+    "current_lesson": 3,
+    "quiz_scores": {},
+    "vocabulary_mastered": [
+      "A",
+      "B"
+    ],
+    "last_activity": "2026-07-13T23:14:09.327270",
+    "progress_percent": 8
+  }
+]

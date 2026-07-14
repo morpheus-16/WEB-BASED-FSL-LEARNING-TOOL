@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "username": "teacher1",
+    "password": "teacher123",
+    "email": "teacher@fsl.edu.ph",
+    "full_name": "Maria Santos",
+    "role": "teacher",
+    "avatar": "MS",
+    "created_at": "2026-07-13T23:14:08.604292",
+    "last_login": "2026-07-13T23:14:21.761410"
+  },
+  {
+    "id": 2,
+    "username": "student1",
+    "password": "student123",
+    "email": "juan@student.ph",
+    "full_name": "Juan Dela Cruz",
+    "role": "student",
+    "avatar": "JD",
+    "created_at": "2026-07-13T23:14:08.604314",
+    "last_login": null
+  },
+  {
+    "id": 3,
+    "username": "student2",
+    "password": "student123",
+    "email": "ana@student.ph",
+    "full_name": "Ana Reyes",
+    "role": "student",
+    "avatar": "AR",
+    "created_at": "2026-07-13T23:14:08.604318",
+    "last_login": null
+  }
+]

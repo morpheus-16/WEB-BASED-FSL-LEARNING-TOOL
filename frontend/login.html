@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In · FSL Learn</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="icon" href="/assets/logo.svg" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="card-3d auth-card">
+      <a href="/" class="logo">
+        <div class="logo-icon"><img src="/assets/logo.svg" alt="FSL Learn" width="48" height="48" /></div>
+        <span>FSL <span class="brand-accent">Learn</span></span>
+      </a>
+
+      <div class="auth-tabs">
+        <button type="button" class="active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+        <button type="button" id="tab-register" onclick="switchTab('register')">Teacher Register</button>
+      </div>
+
+      <!-- LOGIN (teachers + students) -->
+      <form id="form-login" onsubmit="handleLogin(event)">
+        <p class="text-muted text-center" style="font-size:0.95rem;margin-bottom:1rem">
+          <strong>Students:</strong> use the username &amp; password your teacher gave you.<br />
+          <strong>Teachers:</strong> sign in with your account.
+        </p>
+        <div class="form-group">
+          <label>Username</label>
+          <input class="form-control" name="username" required placeholder="Your username" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input class="form-control" name="password" type="password" required placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn btn-block">Sign In</button>
+      </form>
+
+      <!-- REGISTER — TEACHERS ONLY (no student option) -->
+      <form id="form-register" class="hidden" onsubmit="handleRegister(event)">
+        <p class="text-muted text-center" style="font-size:0.95rem;margin-bottom:1rem;padding:0.75rem;background:var(--primary-soft);border-radius:12px">
+          👩‍🏫 <strong>Teachers only.</strong><br />
+          Students cannot create accounts. Teachers add students under <em>Students → + Add Student</em>.
+        </p>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input class="form-control" name="full_name" required placeholder="Maria Santos" />
+        </div>
+        <div class="form-group">
+          <label>Email (optional)</label>
+          <input class="form-control" name="email" type="email" placeholder="teacher@school.edu.ph" />
+        </div>
+        <div class="form-group">
+          <label>Username</label>
+          <input class="form-control" name="username" required minlength="3" placeholder="teacher_maria" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input class="form-control" name="password" type="password" required minlength="4" placeholder="••••••••" autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn btn-block">Create Teacher Account</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    function switchTab(tab) {
+      const loginForm = document.getElementById("form-login");
+      const regForm = document.getElementById("form-register");
+      const tabLogin = document.getElementById("tab-login");
+      const tabReg = document.getElementById("tab-register");
+      if (tab === "login") {
+        loginForm.classList.remove("hidden");
+        regForm.classList.add("hidden");
+        tabLogin.classList.add("active");
+        tabReg.classList.remove("active");
+      } else {
+        loginForm.classList.add("hidden");
+        regForm.classList.remove("hidden");
+        tabLogin.classList.remove("active");
+        tabReg.classList.add("active");
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const btn = e.target.querySelector("button[type=submit]");
+      btn.disabled = true;
+      btn.textContent = "Signing in…";
+      try {
+        const data = await FSL.api("/auth/login", {
+          method: "POST",
+          body: { username: fd.get("username"), password: fd.get("password") },
+        });
+        FSL.setAuth(data.token, data.user);
+        FSL.toast("Welcome, " + (data.user.full_name || data.user.username) + "!");
+        setTimeout(() => {
+          window.location.href = data.user.role === "teacher" ? "/teacher.html" : "/student.html";
+        }, 400);
+      } catch (err) {
+        FSL.toast(err.message, "error");
+        btn.disabled = false;
+        btn.textContent = "Sign In";
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const btn = e.target.querySelector("button[type=submit]");
+      btn.disabled = true;
+      btn.textContent = "Creating…";
+      try {
+        // Always teacher — no student self-registration
+        const data = await FSL.api("/auth/register", {
+          method: "POST",
+          body: {
+            username: fd.get("username"),
+            password: fd.get("password"),
+            email: fd.get("email") || null,
+            full_name: fd.get("full_name"),
+            role: "teacher",
+          },
+        });
+        FSL.setAuth(data.token, data.user);
+        FSL.toast("Teacher account created!");
+        setTimeout(() => { window.location.href = "/teacher.html"; }, 500);
+      } catch (err) {
+        FSL.toast(err.message, "error");
+        btn.disabled = false;
+        btn.textContent = "Create Teacher Account";
+      }
+    }
+  </script>
+</body>
+</html>

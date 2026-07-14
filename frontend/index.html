@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FSL Learn — Filipino Sign Language Vocabulary Tool</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="icon" href="/assets/logo.svg" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo">
+        <div class="logo-icon"><img src="/assets/logo.svg" alt="FSL Learn" width="48" height="48" /></div>
+        <span>FSL <span class="brand-accent">Learn</span></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#levels">Levels</a></li>
+        <li><a href="/login.html" class="btn btn-sm">Sign In</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="float-shape s1"></div>
+    <div class="float-shape s2"></div>
+    <div class="float-shape s3"></div>
+
+    <div class="hero-content">
+      <div class="hero-badge">🇵🇭 Filipino Sign Language · Vocabulary First</div>
+      <h1>
+        Master FSL Vocabulary<br />
+        <span class="brand-accent">with Interactive Lessons</span>
+      </h1>
+      <p>
+        A modern learning platform for teachers and students. Build vocabulary,
+        take quizzes, join classrooms, and track real progress — all focused on
+        Filipino Sign Language.
+      </p>
+      <div class="hero-actions">
+        <a href="/login.html" class="btn">Get Started Free</a>
+        <a href="#features" class="btn btn-secondary">See How It Works</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="container" style="padding-bottom: 4rem;">
+    <div class="text-center mb-2" style="margin-bottom: 2.5rem;">
+      <h2>Built for <span class="brand-accent">Teachers & Students</span></h2>
+      <p class="text-muted" style="max-width: 520px; margin: 0.75rem auto 0;">
+        Separate experiences, shared goal: fluent FSL vocabulary and confident communication.
+      </p>
+    </div>
+
+    <div class="modules-grid">
+      <div class="card-3d module-card">
+        <div class="module-icon" style="background: linear-gradient(135deg, rgba(233,69,96,0.3), rgba(123,44,191,0.3));">👩‍🏫</div>
+        <h3>Teacher Dashboard</h3>
+        <p>Create classrooms, generate join codes, monitor every student’s lesson progress and quiz scores in real time.</p>
+        <div class="module-meta">
+          <span>Classroom management</span>
+          <span class="badge-pill">Progress tracking</span>
+        </div>
+      </div>
+
+      <div class="card-3d module-card">
+        <div class="module-icon">👨‍🎓</div>
+        <h3>Student Learning Panel</h3>
+        <p>Watch sign videos, study vocabulary by level, complete lessons, and take quizzes that unlock the next stage.</p>
+        <div class="module-meta">
+          <span>Lessons + Videos</span>
+          <span class="badge-pill">Quizzes</span>
+        </div>
+      </div>
+
+      <div class="card-3d module-card">
+        <div class="module-icon">🔤</div>
+        <h3>Alphabet Practice</h3>
+        <p>Starting point for recognition: practice A–Z handshapes. (Camera recognition for alphabets coming as the foundation.)</p>
+        <div class="module-meta">
+          <span>26 letters</span>
+          <span class="badge-pill badge-warn">Starting point</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="levels" class="container" style="padding-bottom: 5rem;">
+    <div class="text-center" style="margin-bottom: 2rem;">
+      <h2>Three Learning Levels</h2>
+      <p class="text-muted">From letters to everyday phrases — vocabulary focused.</p>
+    </div>
+    <div class="modules-grid">
+      <div class="card-3d" style="padding: 1.75rem; border-top: 4px solid #e94560;">
+        <h3>🔤 Alphabet</h3>
+        <p class="text-muted mt-1">FSL manual alphabet A–Z. Foundation for fingerspelling names and new words.</p>
+        <div class="mt-2"><span class="badge-pill">26 lessons</span></div>
+      </div>
+      <div class="card-3d" style="padding: 1.75rem; border-top: 4px solid #0f9b8e;">
+        <h3>👋 Basic Vocabulary</h3>
+        <p class="text-muted mt-1">Greetings, family, school, feelings, needs — the most useful everyday signs.</p>
+        <div class="mt-2"><span class="badge-pill">20+ words</span></div>
+      </div>
+      <div class="card-3d" style="padding: 1.75rem; border-top: 4px solid #7b2cbf;">
+        <h3>💬 Intermediate Phrases</h3>
+        <p class="text-muted mt-1">Full questions and responses: How are you? What’s your name? I need help…</p>
+        <div class="mt-2"><span class="badge-pill">15 phrases</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="border-top: 1px solid var(--border-glass); padding: 2rem 0; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+    <div class="container">
+      <p>FSL Learn · Filipino Sign Language Vocabulary Learning Tool</p>
+      <p style="margin-top: 0.4rem; opacity: 0.7;">Built for classrooms in the Philippines 🇵🇭 · Demo version (no database yet)</p>
+    </div>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script>
+    // if already logged in, go to dashboard
+    document.addEventListener("DOMContentLoaded", () => {
+      const u = FSL.getUser();
+      if (u) {
+        // optional auto-redirect
+        // window.location.href = u.role === "teacher" ? "/teacher.html" : "/student.html";
+      }
+      FSL.initTilt();
+    });
+  </script>
+</body>
+</html>

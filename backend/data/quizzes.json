@@ -1,0 +1,198 @@
+[
+  {
+    "id": 1,
+    "title": "Alphabet Mastery Quiz",
+    "module": "alphabet",
+    "description": "Test your knowledge of FSL alphabet signs A–Z",
+    "passing_score": 70,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple_choice",
+        "question": "What letter is signed with a closed fist and thumb pointing up?",
+        "options": [
+          "A",
+          "B",
+          "C",
+          "D"
+        ],
+        "correct": "A",
+        "sign_hint": "A"
+      },
+      {
+        "id": "q2",
+        "type": "multiple_choice",
+        "question": "Which letter uses the index and middle fingers extended like a 'V'?",
+        "options": [
+          "U",
+          "V",
+          "W",
+          "Y"
+        ],
+        "correct": "V",
+        "sign_hint": "V"
+      },
+      {
+        "id": "q3",
+        "type": "multiple_choice",
+        "question": "The letter 'I' is signed by:",
+        "options": [
+          "Pointing pinky finger up",
+          "Fist with thumb out",
+          "Open palm",
+          "Index finger pointing"
+        ],
+        "correct": "Pointing pinky finger up",
+        "sign_hint": "I"
+      },
+      {
+        "id": "q4",
+        "type": "multiple_choice",
+        "question": "How do you sign the letter 'Y'?",
+        "options": [
+          "Thumb and pinky extended",
+          "All fingers open",
+          "Fist only",
+          "Index and pinky"
+        ],
+        "correct": "Thumb and pinky extended",
+        "sign_hint": "Y"
+      },
+      {
+        "id": "q5",
+        "type": "multiple_choice",
+        "question": "Letter 'C' looks like:",
+        "options": [
+          "A curved hand like the letter C",
+          "A flat palm",
+          "A pointing finger",
+          "Two fingers crossed"
+        ],
+        "correct": "A curved hand like the letter C",
+        "sign_hint": "C"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Basic Vocabulary Quiz",
+    "module": "basic",
+    "description": "Common greetings and everyday FSL words",
+    "passing_score": 70,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple_choice",
+        "question": "How do you sign 'Hello' / 'Kamusta' in FSL?",
+        "options": [
+          "Wave hand near face",
+          "Thumbs up",
+          "Point to self then other",
+          "Clap hands"
+        ],
+        "correct": "Wave hand near face",
+        "sign_hint": "Hello"
+      },
+      {
+        "id": "q2",
+        "type": "multiple_choice",
+        "question": "The sign for 'Thank You' (Salamat) is:",
+        "options": [
+          "Touch chin then move hand forward",
+          "Fist to chest",
+          "Wave both hands",
+          "Point up"
+        ],
+        "correct": "Touch chin then move hand forward",
+        "sign_hint": "Thank You"
+      },
+      {
+        "id": "q3",
+        "type": "multiple_choice",
+        "question": "How is 'Yes' signed?",
+        "options": [
+          "Nodding fist (like head nod)",
+          "Open palm push",
+          "Crossed arms",
+          "Finger snap"
+        ],
+        "correct": "Nodding fist (like head nod)",
+        "sign_hint": "Yes"
+      },
+      {
+        "id": "q4",
+        "type": "multiple_choice",
+        "question": "'Please' (Pakiusap) is typically signed by:",
+        "options": [
+          "Circular motion on chest with open hand",
+          "Pointing",
+          "Clapping",
+          "Thumbs down"
+        ],
+        "correct": "Circular motion on chest with open hand",
+        "sign_hint": "Please"
+      },
+      {
+        "id": "q5",
+        "type": "multiple_choice",
+        "question": "The sign for 'Love' / 'Mahal' often involves:",
+        "options": [
+          "Hands forming a heart or crossing over chest",
+          "Pointing to head",
+          "Waving",
+          "Fist bump"
+        ],
+        "correct": "Hands forming a heart or crossing over chest",
+        "sign_hint": "Love"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Intermediate Phrases Quiz",
+    "module": "intermediate",
+    "description": "Useful everyday phrases in Filipino Sign Language",
+    "passing_score": 70,
+    "questions": [
+      {
+        "id": "q1",
+        "type": "multiple_choice",
+        "question": "How do you ask 'How are you?' in FSL?",
+        "options": [
+          "Sign 'how' + 'you' with facial expression",
+          "Just wave",
+          "Point to sky",
+          "Thumbs up only"
+        ],
+        "correct": "Sign 'how' + 'you' with facial expression",
+        "sign_hint": "How are you?"
+      },
+      {
+        "id": "q2",
+        "type": "multiple_choice",
+        "question": "'What is your name?' involves:",
+        "options": [
+          "Signs for 'what' + 'name' + point to person",
+          "Writing in air",
+          "Only fingerspelling",
+          "Clapping name"
+        ],
+        "correct": "Signs for 'what' + 'name' + point to person",
+        "sign_hint": "What is your name?"
+      },
+      {
+        "id": "q3",
+        "type": "multiple_choice",
+        "question": "To say 'I am fine' you typically:",
+        "options": [
+          "Point to self + 'fine/good' sign + smile",
+          "Just nod",
+          "Wave goodbye",
+          "Cross fingers"
+        ],
+        "correct": "Point to self + 'fine/good' sign + smile",
+        "sign_hint": "I am fine"
+      }
+    ]
+  }
+]
