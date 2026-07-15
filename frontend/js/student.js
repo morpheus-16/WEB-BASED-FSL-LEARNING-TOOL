@@ -626,6 +626,124 @@ function goBackToLevelFromLesson() {
   }
 }
 
+// Show congratulations popup
+function showCongratulationsPopup(nextLessonId) {
+  // Create overlay
+  const overlay = document.createElement("div");
+  overlay.id = "congrats-overlay";
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.5s ease-out;
+  `;
+
+  // Create popup card
+  const popup = document.createElement("div");
+  popup.style.cssText = `
+    background: white;
+    border-radius: 2rem;
+    padding: 3rem 2.5rem;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+  `;
+
+  // Add gradient background accent
+  popup.innerHTML = `
+    <div style="position: absolute; top: -50%; right: -50%; width: 100%; height: 100%; background: radial-gradient(circle, rgba(43, 123, 185, 0.1), transparent 70%); border-radius: 50%;"></div>
+    <div style="position: absolute; bottom: -50%; left: -50%; width: 100%; height: 100%; background: radial-gradient(circle, rgba(45, 159, 111, 0.1), transparent 70%); border-radius: 50%;"></div>
+    
+    <div style="position: relative; z-index: 1;">
+      <div style="font-size: 4rem; margin-bottom: 0.5rem;">🎉</div>
+      <h2 style="font-family: 'Quicksand', sans-serif; font-size: 2rem; font-weight: 800; color: #1e3a5f; margin-bottom: 0.5rem;">Congratulations!</h2>
+      <p style="font-family: 'Quicksand', sans-serif; font-size: 1.1rem; color: #3d5a78; margin-bottom: 1.5rem; line-height: 1.6;">
+        You've successfully completed this lesson!<br>
+        <span style="font-weight: 700; color: #2b7bb9;">Keep up the amazing work! 🌟</span>
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <button id="continue-btn" style="
+          background: linear-gradient(135deg, #2b7bb9, #1e5f94);
+          color: white;
+          border: none;
+          padding: 0.8rem 2.5rem;
+          border-radius: 999px;
+          font-family: 'Quicksand', sans-serif;
+          font-size: 1.1rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(43, 123, 185, 0.4);
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+          Continue to Next Lesson →
+        </button>
+      </div>
+    </div>
+  `;
+
+  overlay.appendChild(popup);
+  document.body.appendChild(overlay);
+
+  // Add keyframe animations
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Trigger confetti
+  triggerConfetti();
+
+  // Handle continue button click
+  document.getElementById("continue-btn").addEventListener("click", function() {
+    // Remove overlay with animation
+    overlay.style.opacity = "0";
+    overlay.style.transition = "opacity 0.3s ease";
+    setTimeout(() => {
+      overlay.remove();
+      if (nextLessonId) {
+        openLessonPage(nextLessonId);
+      } else {
+        // If no next lesson, go back to level
+        goBackToLevelFromLesson();
+      }
+    }, 300);
+  });
+
+  // Close on click outside (optional)
+  overlay.addEventListener("click", function(e) {
+    if (e.target === overlay) {
+      overlay.style.opacity = "0";
+      overlay.style.transition = "opacity 0.3s ease";
+      setTimeout(() => {
+        overlay.remove();
+        if (nextLessonId) {
+          openLessonPage(nextLessonId);
+        } else {
+          goBackToLevelFromLesson();
+        }
+      }, 300);
+    }
+  });
+}
+
 async function openLessonPage(lessonId) {
   stopRecognition(true);
   quizMode = null;
@@ -669,7 +787,7 @@ async function openLessonPage(lessonId) {
             </button>
           ` : ''}
           ${nextLesson ? `
-            <button class="bg-gradient-to-r from-primary to-blue-600 text-white font-bold text-sm px-6 py-2.5 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-1" onclick="openLessonPage('${nextLesson.id}')">
+            <button class="bg-gradient-to-r from-primary to-blue-600 text-white font-bold text-sm px-6 py-2.5 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-1" onclick="handleNextClick('${nextLesson.id}')">
               Next
               <span class="material-symbols-outlined text-sm">arrow_forward</span>
             </button>
@@ -791,6 +909,12 @@ async function openLessonPage(lessonId) {
       canvas.classList.remove("hidden");
     }
   }
+}
+
+// Handle Next button click - show congratulations popup
+function handleNextClick(nextLessonId) {
+  // Show the congratulations popup with confetti
+  showCongratulationsPopup(nextLessonId);
 }
 
 async function openLesson(lessonId) {

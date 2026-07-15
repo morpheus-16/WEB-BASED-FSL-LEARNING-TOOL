@@ -592,3 +592,72 @@ main {
 .animate-bounce-slow {
   animation: bounce-slow 2s ease-in-out infinite;
 }
+#next-lesson-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+#next-lesson-btn:not(:disabled) {
+  cursor: pointer;
+}
+
+#btn-simulation-mode {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.6);
+  }
+}#next-lesson-btn {
+  transition: all 0.3s ease;
+}
+
+#next-lesson-btn.hidden {
+  display: none !important;
+}
+
+#next-lesson-btn:not(.hidden) {
+  display: flex !important;
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+#student-webcam {
+  transform: scaleX(-1);
+}
+
+#student-canvas {
+  transform: scaleX(-1);
+}
+
+.confetti-particle {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  animation: confettiFall 3s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
