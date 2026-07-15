@@ -481,3 +481,114 @@ main {
   box-shadow: 0 6px 16px rgba(0,0,0,0.06);
   margin-bottom: 0.75rem;
 }
+.view-container {
+  position: fixed;
+  top: 73px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  background: var(--bg, #f8f9ff);
+  padding: 1.5rem 2rem;
+  z-index: 50;
+}
+
+@media (max-width: 768px) {
+  .view-container {
+    top: 64px;
+    padding: 1rem;
+  }
+}
+
+#view-lesson {
+  padding-top: 1rem;
+}
+.view-container {
+  position: fixed;
+  top: 73px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  background: #f8f9ff;
+  padding: 1.5rem 2rem;
+  z-index: 50;
+}
+
+.view-container.hidden {
+  display: none !important;
+}
+
+#view-lesson {
+  padding-top: 0.5rem;
+}
+
+#view-level {
+  padding-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .view-container {
+    top: 64px;
+    padding: 1rem;
+  }
+}
+.view-container {
+  position: fixed;
+  top: 73px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  background: #f8f9ff;
+  z-index: 50;
+}
+
+.view-container.hidden {
+  display: none !important;
+}
+
+#view-lesson {
+  padding: 0;
+}
+
+#view-level {
+  padding: 1.5rem 2rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .view-container {
+    top: 64px;
+  }
+  #view-level {
+    padding: 1rem;
+  }
+}
+
+#lesson-content {
+  width: 100%;
+  height: 100%;
+}
+
+#lesson-content > div {
+  width: 100%;
+  height: 100%;
+}
+
+#student-webcam {
+  transform: scaleX(-1);
+}
+
+#student-canvas {
+  transform: scaleX(-1);
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}

@@ -109,8 +109,12 @@ function showView(name, el) {
   hideDuoTooltip();
   hideFeedbackTray();
 
+  // Hide all views first
+  document.querySelectorAll('.view-container').forEach(v => {
+    v.classList.add('hidden');
+  });
+
   if (name === "level") {
-    document.getElementById("view-learn").classList.add("hidden");
     const levelView = document.getElementById("view-level");
     if (levelView) {
       levelView.classList.remove("hidden");
@@ -118,7 +122,7 @@ function showView(name, el) {
       const viewLearn = document.getElementById("view-learn");
       const levelView = document.createElement("div");
       levelView.id = "view-level";
-      levelView.className = "hidden space-y-8";
+      levelView.className = "view-container hidden";
       viewLearn.parentNode.insertBefore(levelView, viewLearn.nextSibling);
       
       const container = document.createElement("div");
@@ -127,23 +131,24 @@ function showView(name, el) {
       
       levelView.classList.remove("hidden");
     }
+    document.getElementById("view-learn").classList.add("hidden");
     return;
   }
 
-  if (name === "lesson-detail") {
+  if (name === "lesson-view") {
     document.getElementById("view-learn").classList.add("hidden");
-    const lessonView = document.getElementById("view-lesson-detail");
+    const lessonView = document.getElementById("view-lesson");
     if (lessonView) {
       lessonView.classList.remove("hidden");
     } else {
       const viewLearn = document.getElementById("view-learn");
       const lessonView = document.createElement("div");
-      lessonView.id = "view-lesson-detail";
-      lessonView.className = "hidden";
+      lessonView.id = "view-lesson";
+      lessonView.className = "view-container hidden";
       viewLearn.parentNode.insertBefore(lessonView, viewLearn.nextSibling);
       
       const container = document.createElement("div");
-      container.id = "lesson-detail-content";
+      container.id = "lesson-content";
       lessonView.appendChild(container);
       
       lessonView.classList.remove("hidden");
@@ -151,7 +156,8 @@ function showView(name, el) {
     return;
   }
 
-  ["home", "learn", "profile", "level", "lesson-detail"].forEach((v) => {
+  // Handle regular views
+  ["home", "learn", "profile"].forEach((v) => {
     const n = document.getElementById("view-" + v);
     if (n) {
       if (v === name) {
@@ -161,6 +167,11 @@ function showView(name, el) {
       }
     }
   });
+  
+  const levelView = document.getElementById("view-level");
+  if (levelView) levelView.classList.add("hidden");
+  const lessonView = document.getElementById("view-lesson");
+  if (lessonView) lessonView.classList.add("hidden");
   
   document.querySelectorAll(".sidebar-nav button, .bottom-link").forEach((a) => {
     a.classList.remove("active");
@@ -173,10 +184,6 @@ function showView(name, el) {
   if (name === "home") loadHome();
   if (name === "learn") {
     loadLearnModules();
-    const levelView = document.getElementById("view-level");
-    if (levelView) levelView.classList.add("hidden");
-    const lessonView = document.getElementById("view-lesson-detail");
-    if (lessonView) lessonView.classList.add("hidden");
   }
   if (name === "profile") {
     const u = user || {};
@@ -585,7 +592,7 @@ function showDuoTooltip(nodeEl, lesson, status) {
   tooltip.innerHTML = `
     <div class="font-quicksand font-bold text-base text-primary mb-2">${escapeHtml(lesson.title)}</div>
     <p class="text-sm text-on-surface-variant leading-tight mb-3">Shape: ${escapeHtml(lesson.vocab || "")}</p>
-    <button class="w-full bg-primary text-white text-base font-bold py-3 px-6 rounded-xl hover:bg-primary-container transition-all shadow-lg" onclick="openLessonDetail('${lesson.id}')">
+    <button class="w-full bg-primary text-white text-base font-bold py-3 px-6 rounded-xl hover:bg-primary-container transition-all shadow-lg" onclick="openLessonPage('${lesson.id}')">
       ${actionText}
     </button>
   `;
@@ -610,94 +617,179 @@ function hideDuoTooltip() {
   if (tooltip) tooltip.style.display = "none";
 }
 
-async function openLessonDetail(lessonId) {
+function goBackToLevelFromLesson() {
+  showView("level");
+  const lessonView = document.getElementById("view-lesson");
+  if (lessonView) lessonView.classList.add("hidden");
+  if (currentModule) {
+    loadLevelContent(currentModule);
+  }
+}
+
+async function openLessonPage(lessonId) {
   stopRecognition(true);
   quizMode = null;
   hideFeedbackTray();
 
   const lesson = await FSL.api("/lessons/" + lessonId);
   
-  showView("lesson-detail");
+  showView("lesson-view");
   
-  const container = document.getElementById("lesson-detail-content");
+  const container = document.getElementById("lesson-content");
   if (!container) return;
 
+  const currentIndex = moduleLessonList.findIndex(l => l.id === lessonId);
+  const totalLessons = moduleLessonList.length;
+  const isCompleted = completedSet.has(lessonId);
+  const isLast = currentIndex === totalLessons - 1;
+  const nextLesson = !isLast ? moduleLessonList[currentIndex + 1] : null;
+  const prevLesson = currentIndex > 0 ? moduleLessonList[currentIndex - 1] : null;
+  const isAlphabet = currentModule === 'alphabet';
+
   container.innerHTML = `
-    <div class="max-w-3xl mx-auto">
-      <div class="flex items-center justify-between mb-4">
-        <button class="flex items-center gap-2 bg-surface-container border border-outline-variant text-on-surface-variant font-bold text-sm px-4 py-2 rounded-xl hover:bg-surface-container-high transition-colors" onclick="goBackToLevelFromLesson()">
-          <span class="material-symbols-outlined text-sm">arrow_back</span>
-          Back to Level
+    <div class="h-full w-full flex flex-col bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      <!-- Top Navigation Bar - Kid Friendly -->
+      <div class="flex items-center justify-between px-6 py-3 bg-white/80 backdrop-blur-sm border-b-4 border-primary/20 shrink-0">
+        <button class="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary font-bold text-base px-5 py-2.5 rounded-2xl transition-all hover:scale-105 active:scale-95 border-2 border-primary/20" onclick="goBackToLevelFromLesson()">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Back
         </button>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-primary/10">
+            <span class="text-sm font-bold text-primary">⭐ Lesson</span>
+            <span class="text-sm font-bold text-on-surface-variant">${currentIndex + 1} of ${totalLessons}</span>
+          </div>
+          ${isCompleted ? '<span class="flex items-center gap-1 bg-green-100 text-green-700 font-bold text-sm px-4 py-2 rounded-2xl border-2 border-green-300"><span class="material-symbols-outlined text-sm">check_circle</span> Done!</span>' : ''}
+        </div>
+        <div class="flex gap-2">
+          ${prevLesson ? `
+            <button class="bg-white border-2 border-primary/20 text-primary font-bold text-sm px-5 py-2.5 rounded-2xl hover:bg-primary/5 transition-all hover:scale-105 active:scale-95 flex items-center gap-1 shadow-md" onclick="openLessonPage('${prevLesson.id}')">
+              <span class="material-symbols-outlined text-sm">arrow_back</span>
+              Prev
+            </button>
+          ` : ''}
+          ${nextLesson ? `
+            <button class="bg-gradient-to-r from-primary to-blue-600 text-white font-bold text-sm px-6 py-2.5 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-1" onclick="openLessonPage('${nextLesson.id}')">
+              Next
+              <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          ` : ''}
+        </div>
       </div>
-      <div class="glass-card rounded-2xl p-6 border border-outline-variant/35">
-        <h2 class="font-quicksand font-bold text-2xl text-primary mb-2">${escapeHtml(lesson.title)}</h2>
-        <p class="text-sm text-on-surface-variant mb-4">${escapeHtml(lesson.description || "Learn this sign and practice with the webcam!")}</p>
-        
-        <div class="flex flex-wrap items-center gap-4 mb-6">
-          <div class="px-4 py-2 bg-surface-container rounded-xl">
-            <span class="text-xs font-bold text-on-surface-variant">Sign</span>
-            <p class="text-lg font-bold text-primary">${escapeHtml(lesson.vocab || lesson.title)}</p>
-          </div>
-          <div class="px-4 py-2 bg-surface-container rounded-xl">
-            <span class="text-xs font-bold text-on-surface-variant">Difficulty</span>
-            <p class="text-lg font-bold text-primary">${"⭐".repeat(lesson.difficulty || 1)}</p>
-          </div>
-          <div class="px-4 py-2 bg-surface-container rounded-xl">
-            <span class="text-xs font-bold text-on-surface-variant">Duration</span>
-            <p class="text-lg font-bold text-primary">${lesson.estimated_minutes || 5} min</p>
-          </div>
-        </div>
 
-        ${lesson.video_url ? `
-          <div class="mb-6">
-            <h3 class="font-quicksand font-bold text-lg text-primary mb-2">📹 Sign Video</h3>
-            <div class="rounded-xl overflow-hidden bg-slate-900 aspect-video">
-              <video class="w-full h-full object-cover" controls autoplay loop muted>
-                <source src="${escapeHtml(lesson.video_url)}" type="video/mp4" />
-              </video>
-            </div>
+      <!-- Main Content - Full remaining height -->
+      <div class="flex-1 flex overflow-hidden p-4 gap-4">
+        <!-- Left Side - Letter + Image -->
+        <div class="flex-1 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm rounded-3xl border-2 border-primary/10 p-6 shadow-xl">
+          <!-- Big Letter -->
+          <div class="text-8xl md:text-9xl font-extrabold text-primary font-quicksand mb-4 drop-shadow-lg animate-bounce-slow">
+            ${escapeHtml(lesson.vocab || lesson.title)}
           </div>
-        ` : ''}
-
-        ${lesson.image_url ? `
-          <div class="mb-6">
-            <h3 class="font-quicksand font-bold text-lg text-primary mb-2">🖼️ Sign Image</h3>
-            <div class="rounded-xl overflow-hidden border border-outline-variant/35">
-              <img src="${escapeHtml(lesson.image_url)}" alt="${escapeHtml(lesson.title)}" class="w-full h-auto" />
-            </div>
-          </div>
-        ` : ''}
-
-        ${lesson.instructions ? `
-          <div class="mb-6 p-4 bg-surface-container rounded-xl border border-outline-variant/35">
-            <h3 class="font-quicksand font-bold text-lg text-primary mb-2">📝 How to Sign</h3>
-            <p class="text-sm text-on-surface-variant whitespace-pre-line">${escapeHtml(lesson.instructions)}</p>
-          </div>
-        ` : ''}
-
-        <div class="mt-6 space-y-3">
-          <button class="w-full bg-primary text-white font-bold text-base py-4 px-6 rounded-xl btn-3d flex items-center justify-center gap-2" onclick="openLessonWebcam('${lesson.id}')">
-            <span class="material-symbols-outlined">videocam</span>
-            Practice with Webcam
-          </button>
+          <p class="text-2xl font-bold text-on-surface-variant mb-4">${escapeHtml(lesson.title)}</p>
           
-          <button class="w-full bg-surface-container border border-outline-variant text-on-surface-variant font-bold text-base py-3 px-6 rounded-xl hover:bg-surface-container-high transition-colors" onclick="openLesson('${lesson.id}')">
-            <span class="material-symbols-outlined">visibility</span>
-            View Lesson in Current View
-          </button>
+          <!-- Image/Video -->
+          <div class="w-full max-w-2xl flex-1 min-h-[200px]">
+            ${lesson.video_url ? `
+              <div class="rounded-2xl overflow-hidden bg-slate-800 h-full min-h-[200px] border-4 border-primary/20">
+                <video class="w-full h-full object-cover" controls autoplay loop muted>
+                  <source src="${escapeHtml(lesson.video_url)}" type="video/mp4" />
+                </video>
+              </div>
+            ` : lesson.image_url ? `
+              <div class="rounded-2xl overflow-hidden bg-white border-4 border-primary/20 h-full min-h-[200px] flex items-center justify-center">
+                <img src="${escapeHtml(lesson.image_url)}" alt="${escapeHtml(lesson.title)}" class="w-full h-full object-contain" />
+              </div>
+            ` : `
+              <div class="rounded-2xl overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 border-4 border-dashed border-primary/30 flex items-center justify-center h-full min-h-[200px]">
+                <div class="text-center">
+                  <span class="material-symbols-outlined text-6xl text-primary/40">image</span>
+                  <p class="text-sm text-on-surface-variant mt-2">No media available</p>
+                </div>
+              </div>
+            `}
+          </div>
         </div>
+
+        <!-- Right Side - Camera/Recognition (Alphabet only) -->
+        ${isAlphabet ? `
+          <div class="w-[45%] min-w-[350px] flex flex-col bg-white/80 backdrop-blur-sm rounded-3xl border-2 border-primary/20 p-4 shadow-xl">
+            <div class="flex items-center gap-3 mb-3 shrink-0">
+              <span class="material-symbols-outlined text-3xl text-primary">videocam</span>
+              <h3 class="font-quicksand font-bold text-xl text-primary">Sign & Spell!</h3>
+              <span class="ml-auto text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-4 py-1.5 rounded-full shadow-md">🎯 Alphabet</span>
+            </div>
+            
+            <p class="text-sm text-on-surface-variant mb-3 shrink-0 font-medium">
+              Show the sign for <strong class="text-2xl text-primary">${escapeHtml(lesson.vocab || lesson.title)}</strong>
+            </p>
+            
+            <!-- Camera Area -->
+            <div class="flex-1 relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl overflow-hidden border-4 border-primary/30 min-h-[250px]">
+              <div id="camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-white/60">
+                <span class="material-symbols-outlined text-7xl animate-pulse">videocam</span>
+                <p class="text-base font-medium mt-3">📸 Ready!</p>
+                <p class="text-sm opacity-60">Click Start to begin</p>
+              </div>
+              <video id="student-webcam" class="w-full h-full object-cover hidden" playsinline></video>
+              <canvas id="student-canvas" class="w-full h-full object-cover absolute inset-0 hidden"></canvas>
+              
+              <!-- Recognition overlay -->
+              <div class="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-full border border-white/10">
+                <span class="text-sm font-bold" id="recognized-letter">?</span>
+              </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="mt-4 shrink-0">
+              <div class="flex items-center gap-4">
+                <div class="flex-1">
+                  <div class="flex justify-between text-sm font-bold text-on-surface-variant mb-1">
+                    <span>👋 Hold sign</span>
+                    <span id="webcam-target-hint" class="text-primary">${escapeHtml(lesson.vocab || lesson.title)}</span>
+                  </div>
+                  <div class="w-full bg-blue-100 h-4 rounded-full overflow-hidden border-2 border-primary/20">
+                    <div class="h-full bg-gradient-to-r from-primary to-green-400 rounded-full transition-all duration-300" id="hold-progress-ring" style="width:0%"></div>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <button class="bg-gradient-to-r from-primary to-blue-600 text-white font-bold text-sm py-3 px-6 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-1" id="btn-start-recognition" onclick="startRecognition('lesson', '${escapeHtml(lesson.vocab || lesson.title)}', '${lesson.id}')">
+                    <span class="material-symbols-outlined text-sm">play_arrow</span> Start
+                  </button>
+                  <button class="bg-gradient-to-r from-red-500 to-red-600 text-white font-bold text-sm py-3 px-6 rounded-2xl hidden hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center gap-1" id="btn-stop-recognition" onclick="stopRecognition()">
+                    <span class="material-symbols-outlined text-sm">stop</span> Stop
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : `
+          <!-- Non-alphabet: Description panel -->
+          <div class="w-[45%] min-w-[350px] flex flex-col bg-white/80 backdrop-blur-sm rounded-3xl border-2 border-primary/20 p-6 shadow-xl items-center justify-center">
+            <div class="max-w-md text-center">
+              <span class="material-symbols-outlined text-7xl text-primary/30 mb-4">description</span>
+              <h3 class="font-quicksand font-bold text-2xl text-primary mb-3">${escapeHtml(lesson.title)}</h3>
+              ${lesson.description ? `
+                <p class="text-base text-on-surface-variant leading-relaxed">${escapeHtml(lesson.description)}</p>
+              ` : ''}
+              ${lesson.instructions ? `
+                <div class="mt-4 p-4 bg-blue-50 rounded-2xl border-2 border-primary/20">
+                  <p class="text-sm text-on-surface-variant leading-relaxed">${escapeHtml(lesson.instructions)}</p>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `}
       </div>
     </div>
   `;
-}
 
-function goBackToLevelFromLesson() {
-  showView("level");
-  const lessonView = document.getElementById("view-lesson-detail");
-  if (lessonView) lessonView.classList.add("hidden");
-  if (currentModule) {
-    loadLevelContent(currentModule);
+  if (isAlphabet) {
+    const video = document.getElementById("student-webcam");
+    const canvas = document.getElementById("student-canvas");
+    if (video && canvas) {
+      video.classList.remove("hidden");
+      canvas.classList.remove("hidden");
+    }
   }
 }
 
@@ -791,10 +883,14 @@ function startRecognition(mode, target, lessonId) {
   recognizing = true;
   camera.start();
 
-  document.getElementById("webcam-preview").classList.remove("hidden");
-  document.getElementById("camera-placeholder").classList.add("hidden");
-  document.getElementById("btn-start-recognition").classList.add("hidden");
-  document.getElementById("btn-stop-recognition").classList.remove("hidden");
+  const placeholder = document.getElementById("camera-placeholder");
+  if (placeholder) placeholder.classList.add("hidden");
+  
+  const btnStart = document.getElementById("btn-start-recognition");
+  if (btnStart) btnStart.classList.add("hidden");
+  
+  const btnStop = document.getElementById("btn-stop-recognition");
+  if (btnStop) btnStop.classList.remove("hidden");
   
   updateSigny("neutral");
 }
@@ -806,11 +902,8 @@ function stopRecognition(silent = false) {
     camera = null;
   }
   
-  const webPreview = document.getElementById("webcam-preview");
-  if (webPreview) webPreview.classList.add("hidden");
-  
-  const camPlaceholder = document.getElementById("camera-placeholder");
-  if (camPlaceholder) camPlaceholder.classList.remove("hidden");
+  const placeholder = document.getElementById("camera-placeholder");
+  if (placeholder) placeholder.classList.remove("hidden");
   
   const btnStart = document.getElementById("btn-start-recognition");
   if (btnStart) btnStart.classList.remove("hidden");
@@ -884,7 +977,7 @@ async function predictFrame(landmarks) {
       const pct = (elapsed / HOLD_MS) * 100;
       updateHoldRing(pct);
 
-      if (st) st.textContent = `Recognized target: ${letter}! Hold sign ... ${Math.max(0, Math.ceil((HOLD_MS - elapsed) / 1000))}s`;
+      if (st) st.textContent = `✅ ${letter}! Hold... ${Math.max(0, Math.ceil((HOLD_MS - elapsed) / 1000))}s`;
 
       if (elapsed >= HOLD_MS) {
         stopRecognition(true);
@@ -896,7 +989,7 @@ async function predictFrame(landmarks) {
           moduleExamIndex++;
           if (moduleExamIndex >= ALPHA_LETTERS.length) {
             triggerConfetti();
-            showFeedbackTray(true, "Level Mastered! 🎉", "Sensational job! You passed the entire Alphabet Exam challenge.");
+            showFeedbackTray(true, "🎉 Level Mastered!", "Amazing! You passed the entire Alphabet Exam!");
             const area = document.getElementById("module-quiz-area");
             if (area) area.innerHTML = "";
           } else {
@@ -909,7 +1002,7 @@ async function predictFrame(landmarks) {
             if (areaTarget) areaTarget.textContent = quizTargetLetter;
             if (pr) pr.textContent = String(moduleExamIndex + 1);
             
-            showFeedbackTray(true, "Correct Shape!", `Moving to letter: ${quizTargetLetter}`, () => {
+            showFeedbackTray(true, "✅ Correct!", `Now sign: ${quizTargetLetter}`, () => {
               if (st) st.textContent = "Show letter: " + quizTargetLetter;
             });
           }
@@ -918,7 +1011,7 @@ async function predictFrame(landmarks) {
     } else {
       holdStart = null;
       updateHoldRing(0);
-      if (st) st.textContent = "Show letter " + quizTargetLetter + " (Recognized: " + letter + ")";
+      if (st) st.textContent = "Show " + quizTargetLetter + " (Recognized: " + letter + ")";
     }
   } catch (e) { console.warn(e); }
 }
@@ -1008,7 +1101,7 @@ async function markLessonPassed(lessonId, vocab) {
   const idx = moduleLessonList.findIndex((l) => l.id === lessonId);
   const next = idx >= 0 ? moduleLessonList[idx + 1] : null;
 
-  showFeedbackTray(true, "Lesson Passed!", "Fantastic! You've mastered this node progress path.", () => {
+  showFeedbackTray(true, "🎉 Lesson Complete!", "Fantastic! You mastered this sign!", () => {
     stopRecognition(true);
     if (next) {
       document.getElementById("module-quiz-area").innerHTML = `
@@ -1016,7 +1109,7 @@ async function markLessonPassed(lessonId, vocab) {
           <span class="material-symbols-outlined text-4xl text-primary animate-bounce">arrow_circle_right</span>
           <h4 class="font-quicksand font-bold text-base text-primary mt-2">Next Node Unlocked</h4>
           <p class="text-xs text-on-surface-variant mt-1 mb-4">You are ready to learn: <strong>${escapeHtml(next.title)}</strong></p>
-          <button class="btn-3d w-full bg-primary text-white font-semibold text-xs py-2.5 rounded-lg uppercase" onclick="openLessonDetail('${next.id}')">
+          <button class="btn-3d w-full bg-primary text-white font-semibold text-xs py-2.5 rounded-lg uppercase" onclick="openLessonPage('${next.id}')">
             Continue Journey
           </button>
         </div>
