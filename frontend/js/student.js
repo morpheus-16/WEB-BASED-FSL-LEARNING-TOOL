@@ -111,13 +111,50 @@ function updateSigny(expression = "neutral") {
 
 // ---------------- NAVIGATION ----------------
 function showView(name, el) {
-  // Hide tooltips/trays on view switch
   hideDuoTooltip();
   hideFeedbackTray();
 
-  ["home", "learn", "profile"].forEach((v) => {
+  // Handle level view specially
+  if (name === "level") {
+    document.getElementById("view-learn").classList.add("hidden");
+    const levelView = document.getElementById("view-level");
+    if (levelView) {
+      levelView.classList.remove("hidden");
+    } else {
+      // Create level view if it doesn't exist
+      const viewLearn = document.getElementById("view-learn");
+      const levelView = document.createElement("div");
+      levelView.id = "view-level";
+      levelView.className = "hidden space-y-8";
+      viewLearn.parentNode.insertBefore(levelView, viewLearn.nextSibling);
+      
+      const container = document.createElement("div");
+      container.id = "level-content";
+      levelView.appendChild(container);
+      
+      const backBtn = document.createElement("button");
+      backBtn.className = "flex items-center gap-2 text-primary font-bold text-sm mb-4 hover:underline";
+      backBtn.innerHTML = '<span class="material-symbols-outlined">arrow_back</span> Back to Levels';
+      backBtn.onclick = function() {
+        showView("learn");
+        document.getElementById("view-level").classList.add("hidden");
+      };
+      levelView.prepend(backBtn);
+      
+      levelView.classList.remove("hidden");
+    }
+    return;
+  }
+
+  ["home", "learn", "profile", "level"].forEach((v) => {
     const n = document.getElementById("view-" + v);
-    if (n) n.classList.toggle("hidden", v !== name);
+    if (n) {
+      if (v === name) {
+        n.classList.remove("hidden");
+      } else {
+        n.classList.add("hidden");
+      }
+    }
   });
   
   document.querySelectorAll(".sidebar-nav button, .bottom-link").forEach((a) => {
@@ -129,8 +166,11 @@ function showView(name, el) {
   });
 
   if (name === "home") loadHome();
-  if (name === "learn") loadLearnModules();
-  
+  if (name === "learn") {
+    loadLearnModules();
+    const levelView = document.getElementById("view-level");
+    if (levelView) levelView.classList.add("hidden");
+  }
   if (name === "profile") {
     const u = user || {};
     document.getElementById("prof-name").value = u.full_name || "";
@@ -216,29 +256,89 @@ async function refreshCompleted() {
 }
 async function loadLearnModules() {
   const box = document.getElementById("learn-modules");
-  box.innerHTML = `<p class="text-on-surface-variant font-bold text-center col-span-3 py-12 animate-pulse font-quicksand">Loading lessons...</p>`;
+  box.innerHTML = `
+    <div class="col-span-3 flex justify-center py-12">
+      <div class="spinner"></div>
+    </div>
+  `;
+  
   try {
     const modules = await FSL.api("/modules");
-    box.innerHTML = (modules || []).map((m) => `
-      <div class="glass-card rounded-2xl p-6 hover:-translate-y-1 hover:shadow-lg transition-all cursor-pointer border border-outline-variant/30 flex flex-col justify-between" onclick="openModule('${m.id}')">
-        <div>
-          <h3 class="font-quicksand font-bold text-2xl text-primary mb-2">${escapeHtml(m.title)}</h3>
-          <p class="text-base text-on-surface-variant font-semibold leading-relaxed">${escapeHtml(m.subtitle || m.description || m.id)}</p>
+    
+    if (!modules || !modules.length) {
+      box.innerHTML = `<p class="text-sm text-on-surface-variant text-center col-span-3 py-12">No learning levels available</p>`;
+      return;
+    }
+    
+    let completedSet = new Set();
+    if (currentClassroomId) {
+      try {
+        const prog = await FSL.api("/progress?classroom_id=" + currentClassroomId);
+        const p = Array.isArray(prog) ? prog[0] : prog;
+        completedSet = new Set(p && p.completed_lessons ? p.completed_lessons : []);
+      } catch (_) {}
+    }
+    
+    let unlockedModules = [];
+    for (let i = 0; i < modules.length; i++) {
+      const m = modules[i];
+      if (i === 0) {
+        unlockedModules.push({ ...m, unlocked: true });
+      } else {
+        const prevModule = modules[i - 1];
+        const prevLessons = await FSL.api("/lessons?module=" + prevModule.id);
+        const allPrevDone = prevLessons.every(l => completedSet.has(l.id));
+        unlockedModules.push({ ...m, unlocked: allPrevDone });
+      }
+    }
+    
+    box.innerHTML = unlockedModules.map((m) => {
+      const isUnlocked = m.unlocked;
+      const clickable = isUnlocked ? `onclick="navigateToLevel('${m.id}')"` : '';
+      const cursorClass = isUnlocked ? 'cursor-pointer hover:scale-[1.02]' : 'cursor-not-allowed opacity-60';
+      const lockIcon = isUnlocked ? '' : '<span class="material-symbols-outlined text-2xl">lock</span>';
+      
+      let levelClass = '';
+      if (m.id === 'alphabet') {
+        levelClass = 'module-lvl-1';
+      } else if (m.id === 'vocabulary' || m.id === 'basic') {
+        levelClass = 'module-lvl-2';
+      } else {
+        levelClass = 'module-lvl-3';
+      }
+      
+      return `
+        <div class="learn-module-card ${levelClass} ${cursorClass}" ${clickable}>
+          <h3 class="font-quicksand font-extrabold text-xl text-primary">${escapeHtml(m.title)}</h3>
+          <p class="text-sm text-on-surface-variant font-semibold text-center">${escapeHtml(m.subtitle || m.description || '')}</p>
+          <div class="mt-3 flex items-center gap-2 justify-center">
+            <span class="text-xs font-bold text-on-surface-variant">${m.total_lessons || 0} lessons</span>
+            ${!isUnlocked ? lockIcon : ''}
+          </div>
+          ${isUnlocked ? '<span class="text-xs font-bold text-success mt-1">✔ Ready to start</span>' : '<span class="text-xs font-bold text-muted mt-1">📌 Complete previous level</span>'}
         </div>
-        <div class="mt-4 pt-3 border-t border-outline-variant/30">
-          <span class="text-lg text-on-surface-variant font-bold">${m.total_lessons || 0} lessons</span>
-        </div>
-      </div>`).join("") || `<p class="text-sm text-on-surface-variant text-center col-span-3 py-12">No learning levels available</p>`;
+      `;
+    }).join("");
+    
     document.getElementById("learn-lessons").innerHTML = "";
     document.getElementById("lesson-detail").classList.add("hidden");
     document.getElementById("module-quiz-area").innerHTML = "";
     stopRecognition(true);
+    
   } catch (e) {
     box.innerHTML = `<p class="text-error font-bold text-center col-span-3 py-12">${escapeHtml(e.message)}</p>`;
   }
 }
-// ---------------- DUOLINGO SNAKE PATH GENERATOR ----------------
-async function openModule(moduleId) {
+function navigateToLevel(moduleId) {
+  sessionStorage.setItem("fsl_current_module", moduleId);
+  if (currentClassroomId) {
+    sessionStorage.setItem("fsl_classroom_id", currentClassroomId);
+  }
+  showView("level");
+  loadLevelContent(moduleId);
+}
+
+async function loadLevelContent(moduleId) {
   currentModule = moduleId;
   stopRecognition(true);
   quizMode = null;
@@ -248,19 +348,14 @@ async function openModule(moduleId) {
   moduleLessonList = lessons.slice().sort((a, b) => (a.order || a.id) - (b.order || b.id));
   
   const title = moduleId.charAt(0).toUpperCase() + moduleId.slice(1);
-  const isAlpha = moduleId === "alphabet";
   
-  // Find current first uncompleted lesson to show as active node
   let activeIndex = moduleLessonList.findIndex(l => !completedSet.has(l.id));
   if (activeIndex === -1 && moduleLessonList.length > 0) {
-    // All completed
     activeIndex = moduleLessonList.length; 
   }
 
-  // Winding snake horizontal class patterns
   const shiftPatterns = ["shift-none", "shift-right-1", "shift-right-2", "shift-right-1", "shift-none", "shift-left-1", "shift-left-2", "shift-left-1"];
 
-  // Generate learning nodes
   const nodesHtml = moduleLessonList.map((l, idx) => {
     const isCompleted = completedSet.has(l.id);
     const isActive = idx === activeIndex;
@@ -287,14 +382,92 @@ async function openModule(moduleId) {
 
   const allDone = moduleLessonList.length > 0 && activeIndex === moduleLessonList.length;
 
-  document.getElementById("learn-lessons").innerHTML = `
-    <div class="flex items-center gap-3 mt-6 mb-2">
-      <button class="w-10 h-10 rounded-full hover:bg-surface-container flex items-center justify-center border border-outline-variant/40" onclick="loadLearnModules()">
-        <span class="material-symbols-outlined font-bold">arrow_back</span>
-      </button>
+  const container = document.getElementById("level-content");
+  if (!container) {
+    const viewLearn = document.getElementById("view-learn");
+    const levelView = document.createElement("div");
+    levelView.id = "view-level";
+    levelView.className = "hidden space-y-8";
+    viewLearn.parentNode.insertBefore(levelView, viewLearn.nextSibling);
+    
+    const newContainer = document.createElement("div");
+    newContainer.id = "level-content";
+    levelView.appendChild(newContainer);
+    
+    const backBtn = document.createElement("button");
+    backBtn.className = "flex items-center gap-2 text-primary font-bold text-sm mb-4 hover:underline";
+    backBtn.innerHTML = '<span class="material-symbols-outlined">arrow_back</span> Back to Levels';
+    backBtn.onclick = function() {
+      showView("learn");
+      document.getElementById("view-level").classList.add("hidden");
+    };
+    levelView.prepend(backBtn);
+    
+    document.getElementById("view-level").classList.remove("hidden");
+    document.getElementById("view-learn").classList.add("hidden");
+    
+    const finalContainer = document.getElementById("level-content");
+    finalContainer.innerHTML = `
+      <div class="flex items-center gap-3 mt-2 mb-4">
+        <div>
+          <h2 class="font-quicksand font-bold text-2xl text-primary">${title} Path</h2>
+          <p class="text-sm text-on-surface-variant">Master the path nodes. Challenge the level exam at the end!</p>
+        </div>
+      </div>
+
+      <div class="duo-path-container relative mt-8">
+        <svg class="duo-svg-path" id="duo-svg-path" viewBox="0 0 400 ${moduleLessonList.length * 110}">
+          <path id="duo-line-path" d="" fill="none" stroke="#e5eefd" stroke-dasharray="8 6" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+        
+        ${nodesHtml}
+        
+        <div id="duo-tooltip" class="duo-tooltip"></div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 mt-8 border border-outline-variant/35 flex flex-col items-center justify-center text-center max-w-md mx-auto relative z-10" id="module-exam-card">
+        <span class="material-symbols-outlined text-4xl text-primary mb-2">military_tech</span>
+        <h3 class="font-quicksand font-bold text-lg text-primary mb-1">Level Challenge</h3>
+        <p class="text-sm text-on-surface-variant max-w-sm mb-4">
+          ${allDone 
+            ? "Amazing! You mastered the entire track. Prove your sign skills in the webcam Level Challenge!"
+            : "Unlock the Level Challenge by completing all winding path nodes above."}
+        </p>
+        <button class="btn-3d bg-primary text-white font-semibold text-sm py-3 px-8 rounded-xl uppercase tracking-wider ${allDone ? "" : "opacity-50 cursor-not-allowed"}" type="button" id="btn-module-exam" ${allDone ? "" : "disabled"}>
+          ${moduleId === "alphabet" ? "Start Live Alphabet Quiz" : "Start Level Quiz"}
+        </button>
+      </div>
+    `;
+
+    document.querySelectorAll(".duo-node").forEach(node => {
+      node.addEventListener("click", (e) => {
+        const idx = +node.dataset.idx;
+        const lesson = moduleLessonList[idx];
+        const isLocked = idx > activeIndex;
+        
+        if (isLocked) {
+          FSL.toast("This lesson is locked. Complete previous nodes!", "error");
+          updateSigny("sad");
+          return;
+        }
+        showDuoTooltip(node, lesson, completedSet.has(lesson.id) ? "completed" : "active");
+      });
+    });
+
+    const examBtn = document.getElementById("btn-module-exam");
+    if (examBtn && allDone) {
+      examBtn.onclick = () => startModuleExam(moduleId);
+    }
+
+    setTimeout(drawConnectingLine, 100);
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="flex items-center gap-3 mt-2 mb-4">
       <div>
-        <h2 class="font-quicksand font-bold text-xl text-primary">${title} Path</h2>
-        <p class="text-xs text-on-surface-variant">Master the path nodes. Challenge the level exam at the end!</p>
+        <h2 class="font-quicksand font-bold text-2xl text-primary">${title} Path</h2>
+        <p class="text-sm text-on-surface-variant">Master the path nodes. Challenge the level exam at the end!</p>
       </div>
     </div>
 
@@ -311,21 +484,17 @@ async function openModule(moduleId) {
     <div class="glass-card rounded-2xl p-6 mt-8 border border-outline-variant/35 flex flex-col items-center justify-center text-center max-w-md mx-auto relative z-10" id="module-exam-card">
       <span class="material-symbols-outlined text-4xl text-primary mb-2">military_tech</span>
       <h3 class="font-quicksand font-bold text-lg text-primary mb-1">Level Challenge</h3>
-      <p class="text-xs text-on-surface-variant max-w-sm mb-4">
+      <p class="text-sm text-on-surface-variant max-w-sm mb-4">
         ${allDone 
           ? "Amazing! You mastered the entire track. Prove your sign skills in the webcam Level Challenge!"
           : "Unlock the Level Challenge by completing all winding path nodes above."}
       </p>
-      <button class="btn-3d bg-primary text-white font-semibold text-xs py-3 px-8 rounded-xl uppercase tracking-wider ${allDone ? "" : "opacity-50 cursor-not-allowed"}" type="button" id="btn-module-exam" ${allDone ? "" : "disabled"}>
-        ${isAlpha ? "Start Live Alphabet Quiz" : "Start Level Quiz"}
+      <button class="btn-3d bg-primary text-white font-semibold text-sm py-3 px-8 rounded-xl uppercase tracking-wider ${allDone ? "" : "opacity-50 cursor-not-allowed"}" type="button" id="btn-module-exam" ${allDone ? "" : "disabled"}>
+        ${moduleId === "alphabet" ? "Start Live Alphabet Quiz" : "Start Level Quiz"}
       </button>
     </div>
   `;
 
-  document.getElementById("lesson-detail").classList.add("hidden");
-  document.getElementById("module-quiz-area").innerHTML = "";
-
-  // Wire up winding path node clicks
   document.querySelectorAll(".duo-node").forEach(node => {
     node.addEventListener("click", (e) => {
       const idx = +node.dataset.idx;
@@ -346,11 +515,9 @@ async function openModule(moduleId) {
     examBtn.onclick = () => startModuleExam(moduleId);
   }
 
-  // Draw connecting SVG line between node positions
   setTimeout(drawConnectingLine, 100);
 }
 
-// ---------------- DRAWS THE WINDING CONNECTION LINE ----------------
 function drawConnectingLine() {
   const container = document.querySelector(".duo-path-container");
   const svg = document.getElementById("duo-svg-path");
@@ -371,7 +538,6 @@ function drawConnectingLine() {
 
   if (points.length < 2) return;
 
-  // Render curvy snake path line through the points
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[i];
@@ -384,12 +550,10 @@ function drawConnectingLine() {
   pathEl.setAttribute("d", d);
 }
 
-// Recalculate winding paths on window resize
 window.addEventListener("resize", () => {
   if (currentModule) drawConnectingLine();
 });
 
-// ---------------- SHOW TOOLTIP ON CLICK ----------------
 function showDuoTooltip(nodeEl, lesson, status) {
   const tooltip = document.getElementById("duo-tooltip");
   if (!tooltip) return;
@@ -398,7 +562,6 @@ function showDuoTooltip(nodeEl, lesson, status) {
   const containerRect = container.getBoundingClientRect();
   const nodeRect = nodeEl.getBoundingClientRect();
 
-  // Position tooltip centrally above node
   const left = (nodeRect.left + nodeRect.right) / 2 - containerRect.left;
   const top = nodeRect.top - containerRect.top;
 
@@ -417,14 +580,12 @@ function showDuoTooltip(nodeEl, lesson, status) {
   tooltip.style.top = `${top}px`;
   tooltip.style.display = "block";
 
-  // Close tooltip if clicked elsewhere
   const closeHandler = (event) => {
     if (!tooltip.contains(event.target) && !nodeEl.contains(event.target)) {
       hideDuoTooltip();
       document.removeEventListener("click", closeHandler);
     }
   };
-  // Delay slightly to prevent immediate auto-closing from same click event
   setTimeout(() => {
     document.addEventListener("click", closeHandler);
   }, 50);
@@ -435,7 +596,6 @@ function hideDuoTooltip() {
   if (tooltip) tooltip.style.display = "none";
 }
 
-// ---------------- OPEN LESSON PANELS ----------------
 async function openLesson(lessonId) {
   stopRecognition(true);
   quizMode = null;
@@ -445,7 +605,6 @@ async function openLesson(lessonId) {
   const detail = document.getElementById("lesson-detail");
   detail.classList.remove("hidden");
   
-  // Smooth scroll down to interactive viewport
   detail.scrollIntoView({ behavior: "smooth", block: "start" });
 
   document.getElementById("lesson-title").textContent = lesson.title;
@@ -459,7 +618,6 @@ async function openLesson(lessonId) {
       </video>
     `;
   } else {
-    // Default placeholder card structure
     videoPlaceholder.innerHTML = `
       <div class="flex flex-col items-center text-center p-6 bg-slate-900/10 rounded-2xl justify-center h-full w-full">
         <span class="material-symbols-outlined text-4xl text-outline-variant">movie</span>
@@ -468,18 +626,15 @@ async function openLesson(lessonId) {
     `;
   }
 
-  // Preset lesson practice details 
   document.getElementById("webcam-target-hint").textContent = "Show sign shape: " + lesson.vocab;
   document.getElementById("btn-start-recognition").onclick = () => startRecognition("lesson", lesson.vocab, lesson.id);
   
-  // Clear camera feeds
   document.getElementById("webcam-preview").classList.add("hidden");
   document.getElementById("camera-placeholder").classList.remove("hidden");
 }
 
-// ---------------- MEDIA RECOGNITION (Webcam & MediaPipe) ----------------
 function initMediaPipe() {
-  if (hands) return; // already loaded
+  if (hands) return;
   hands = new Hands({
     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
   });
@@ -520,7 +675,6 @@ function startRecognition(mode, target, lessonId) {
   recognizing = true;
   camera.start();
 
-  // Switch display elements
   document.getElementById("webcam-preview").classList.remove("hidden");
   document.getElementById("camera-placeholder").classList.add("hidden");
   document.getElementById("btn-start-recognition").classList.add("hidden");
@@ -563,18 +717,15 @@ function updateHoldRing(percentage) {
   ring.style.width = val + "%";
 }
 
-// ---------------- CANVAS KEYPOINT RENDERING & PREDICTIONS ----------------
 async function onHandResults(results) {
   if (!recognizing) return;
   
   const canvasElement = document.getElementById("student-canvas");
   const ctx = canvasElement.getContext("2d");
   
-  // Clear Canvas
   ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
   
   if (results.multiHandLandmarks && results.multiHandLandmarks.length) {
-    // Draw joints visual lines locally
     for (const landmarks of results.multiHandLandmarks) {
       drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: '#004ac6', lineWidth: 3 });
       drawLandmarks(ctx, landmarks, { color: '#86f2e4', lineWidth: 1, radius: 3 });
@@ -587,7 +738,6 @@ async function onHandResults(results) {
       await predictFrame(landmarks);
     }
   } else {
-    // No hands present - decay hold progress bar
     if (holdStart) {
       holdStart = null;
       updateHoldRing(0);
@@ -621,17 +771,14 @@ async function predictFrame(landmarks) {
       if (st) st.textContent = `Recognized target: ${letter}! Hold sign ... ${Math.max(0, Math.ceil((HOLD_MS - elapsed) / 1000))}s`;
 
       if (elapsed >= HOLD_MS) {
-        // Mastered / passed node trigger!
         stopRecognition(true);
         updateSigny("happy");
         
         if (quizMode === "lesson") {
           await markLessonPassed(quizLessonId, quizTargetLetter);
         } else if (quizMode === "module") {
-          // Progress level quiz sequence 
           moduleExamIndex++;
           if (moduleExamIndex >= ALPHA_LETTERS.length) {
-            // Complete exam level
             triggerConfetti();
             showFeedbackTray(true, "Level Mastered! 🎉", "Sensational job! You passed the entire Alphabet Exam challenge.");
             const area = document.getElementById("module-quiz-area");
@@ -675,11 +822,9 @@ function toggleSidebar() {
   }
   localStorage.setItem("sidebar-collapsed", isCollapsed ? "true" : "false");
   
-  // Redraw SVG path since positions shift
   setTimeout(drawConnectingLine, 350);
 }
 
-// Initialize sidebar state on page load
 (function() {
   if (localStorage.getItem("sidebar-collapsed") === "true") {
     const nav = document.querySelector(".sidebar-nav");
@@ -691,11 +836,9 @@ function toggleSidebar() {
       }
     }
   }
-  // Load initially home screen contents 
   showView("home");
 })();
 
-// ---------------- FEEDBACK TRANSITION TRAY ----------------
 function showFeedbackTray(success, title, subtitle, onContinue) {
   const tray = document.getElementById("feedback-tray");
   if (!tray) return;
@@ -727,7 +870,6 @@ function hideFeedbackTray() {
   if (tray) tray.className = "feedback-tray";
 }
 
-// ---------------- MARKING LESSON AS COMPLETED ----------------
 async function markLessonPassed(lessonId, vocab) {
   if (currentClassroomId) {
     try {
@@ -765,13 +907,11 @@ async function markLessonPassed(lessonId, vocab) {
       `;
       document.getElementById("module-quiz-area").scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      // Re-initialize path update visual
-      openModule(currentModule);
+      loadLevelContent(currentModule);
     }
   });
 }
 
-// ---------------- MODULE LEVEL CHALLENGE EXAMS ----------------
 function startModuleExam(moduleId) {
   const allDone = moduleLessonList.every((l) => completedSet.has(l.id));
   if (!allDone) {
@@ -821,7 +961,6 @@ function startModuleExam(moduleId) {
 
     area.scrollIntoView({ behavior: "smooth", block: "start" });
   } else {
-    // Generate text/image level quiz cards for regular vocabulary
     generateVocabularyQuiz(moduleId);
   }
 }
@@ -830,17 +969,14 @@ async function generateVocabularyQuiz(moduleId) {
   const area = document.getElementById("module-quiz-area");
   area.innerHTML = `<p class="text-muted text-center py-6">Compiling quiz challenges ...</p>`;
 
-  // Get active module signs
   const lessons = await FSL.api("/lessons?module=" + moduleId);
   if (!lessons.length) {
     area.innerHTML = `<p class="text-xs text-on-surface-variant text-center">No questions available.</p>`;
     return;
   }
 
-  // Create multi-choice question list structure
   const questions = lessons.map((l, idx) => {
     const wrong = lessons.filter(x => x.id !== l.id).map(x => x.vocab);
-    // Shuffle wrong items
     const distractorPool = [...new Set(wrong)].sort(() => 0.5 - Math.random()).slice(0, 3);
     const options = [l.vocab, ...distractorPool].sort(() => 0.5 - Math.random());
     
@@ -855,7 +991,6 @@ async function generateVocabularyQuiz(moduleId) {
   let curIdx = 0;
   const renderQuestion = (st) => {
     if (!st) {
-      // Completed entire exam sequence successfully
       triggerConfetti();
       showFeedbackTray(true, "Vocabulary Level Complete!", "Splendid! You passed all visual vocabulary questions.");
       area.innerHTML = "";
@@ -906,7 +1041,6 @@ async function generateVocabularyQuiz(moduleId) {
           updateSigny("sad");
           
           showFeedbackTray(false, "Incorrect", `That is not the correct sign. Try again!`, () => {
-            // Allow re-selecting
             el.className = "option hover:bg-surface-container flex items-center justify-between border border-outline-variant p-4 rounded-xl cursor-pointer text-xs font-bold select-none transition-all active:scale-[0.98]";
             el.querySelector("span:last-child").innerHTML = "radio_button_unchecked";
             el.querySelector("span:last-child").className = "material-symbols-outlined text-outline-variant text-sm";
