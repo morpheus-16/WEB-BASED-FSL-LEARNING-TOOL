@@ -13,7 +13,7 @@ let lastSend = 0;
 const SEND_INTERVAL_MS = 300;
 const HOLD_MS = 3000;
 let holdStart = null;
-let quizMode = null; // null | 'lesson' | 'module'
+let quizMode = null;
 let quizTargetLetter = null;
 let quizLessonId = null;
 let moduleExamIndex = 0;
@@ -51,7 +51,6 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// ---------------- CONFETTI RENDER ENGINE ----------------
 function triggerConfetti() {
   const colors = ["#ff5964", "#35a7ff", "#38b000", "#ffca3a", "#ff924c", "#9d4edd"];
   const container = document.createElement("div");
@@ -75,7 +74,6 @@ function triggerConfetti() {
   setTimeout(() => container.remove(), 4500);
 }
 
-// ---------------- MASCOT CONTROLLER ----------------
 function updateSigny(expression = "neutral") {
   const SpeechBubble = document.getElementById("mascot-speech");
   const Container = document.getElementById("sidebar-mascot-container");
@@ -89,7 +87,6 @@ function updateSigny(expression = "neutral") {
   }
 }
 
-// Initialize Signy in Sidebar on page load
 (function initMascot() {
   const sidebar = document.querySelector(".sidebar-nav");
   if (sidebar) {
@@ -101,7 +98,6 @@ function updateSigny(expression = "neutral") {
     `;
     sidebar.appendChild(widget);
     
-    // Tap mascot to trigger custom quotes
     widget.addEventListener("click", () => {
       updateSigny("neutral");
     });
@@ -109,19 +105,16 @@ function updateSigny(expression = "neutral") {
   setTimeout(() => updateSigny("neutral"), 100);
 })();
 
-// ---------------- NAVIGATION ----------------
 function showView(name, el) {
   hideDuoTooltip();
   hideFeedbackTray();
 
-  // Handle level view specially
   if (name === "level") {
     document.getElementById("view-learn").classList.add("hidden");
     const levelView = document.getElementById("view-level");
     if (levelView) {
       levelView.classList.remove("hidden");
     } else {
-      // Create level view if it doesn't exist
       const viewLearn = document.getElementById("view-learn");
       const levelView = document.createElement("div");
       levelView.id = "view-level";
@@ -132,21 +125,33 @@ function showView(name, el) {
       container.id = "level-content";
       levelView.appendChild(container);
       
-      const backBtn = document.createElement("button");
-      backBtn.className = "flex items-center gap-2 text-primary font-bold text-sm mb-4 hover:underline";
-      backBtn.innerHTML = '<span class="material-symbols-outlined">arrow_back</span> Back to Levels';
-      backBtn.onclick = function() {
-        showView("learn");
-        document.getElementById("view-level").classList.add("hidden");
-      };
-      levelView.prepend(backBtn);
-      
       levelView.classList.remove("hidden");
     }
     return;
   }
 
-  ["home", "learn", "profile", "level"].forEach((v) => {
+  if (name === "lesson-detail") {
+    document.getElementById("view-learn").classList.add("hidden");
+    const lessonView = document.getElementById("view-lesson-detail");
+    if (lessonView) {
+      lessonView.classList.remove("hidden");
+    } else {
+      const viewLearn = document.getElementById("view-learn");
+      const lessonView = document.createElement("div");
+      lessonView.id = "view-lesson-detail";
+      lessonView.className = "hidden";
+      viewLearn.parentNode.insertBefore(lessonView, viewLearn.nextSibling);
+      
+      const container = document.createElement("div");
+      container.id = "lesson-detail-content";
+      lessonView.appendChild(container);
+      
+      lessonView.classList.remove("hidden");
+    }
+    return;
+  }
+
+  ["home", "learn", "profile", "level", "lesson-detail"].forEach((v) => {
     const n = document.getElementById("view-" + v);
     if (n) {
       if (v === name) {
@@ -170,6 +175,8 @@ function showView(name, el) {
     loadLearnModules();
     const levelView = document.getElementById("view-level");
     if (levelView) levelView.classList.add("hidden");
+    const lessonView = document.getElementById("view-lesson-detail");
+    if (lessonView) lessonView.classList.add("hidden");
   }
   if (name === "profile") {
     const u = user || {};
@@ -179,7 +186,6 @@ function showView(name, el) {
   }
 }
 
-// ---------------- DATA UTILITIES ----------------
 async function loadHome() {
   try { classrooms = await FSL.api("/classrooms/mine"); } catch { classrooms = []; }
   const grid = document.getElementById("my-classrooms");
@@ -254,6 +260,7 @@ async function refreshCompleted() {
     completedSet = new Set(p && p.completed_lessons ? p.completed_lessons : []);
   } catch (_) {}
 }
+
 async function loadLearnModules() {
   const box = document.getElementById("learn-modules");
   box.innerHTML = `
@@ -321,7 +328,6 @@ async function loadLearnModules() {
     }).join("");
     
     document.getElementById("learn-lessons").innerHTML = "";
-    document.getElementById("lesson-detail").classList.add("hidden");
     document.getElementById("module-quiz-area").innerHTML = "";
     stopRecognition(true);
     
@@ -329,6 +335,7 @@ async function loadLearnModules() {
     box.innerHTML = `<p class="text-error font-bold text-center col-span-3 py-12">${escapeHtml(e.message)}</p>`;
   }
 }
+
 function navigateToLevel(moduleId) {
   sessionStorage.setItem("fsl_current_module", moduleId);
   if (currentClassroomId) {
@@ -363,19 +370,21 @@ async function loadLevelContent(moduleId) {
     
     let nodeClass = "duo-node-locked";
     let icon = "lock";
+    let label = idx + 1;
     if (isCompleted) {
       nodeClass = "duo-node-completed";
       icon = "check";
     } else if (isActive) {
       nodeClass = "duo-node-active";
-      icon = l.sign || "play_arrow";
+      icon = "play_arrow";
     }
 
     const shift = shiftPatterns[idx % shiftPatterns.length];
 
     return `
       <div class="duo-node ${nodeClass} ${shift}" data-idx="${idx}" data-id="${l.id}">
-        <span class="material-symbols-outlined text-3xl font-bold">${icon}</span>
+        <span class="text-xs font-bold absolute top-1 left-1/2 -translate-x-1/2 text-white/80">${label}</span>
+        <span class="material-symbols-outlined text-2xl font-bold">${icon}</span>
       </div>
     `;
   }).join("");
@@ -394,25 +403,20 @@ async function loadLevelContent(moduleId) {
     newContainer.id = "level-content";
     levelView.appendChild(newContainer);
     
-    const backBtn = document.createElement("button");
-    backBtn.className = "flex items-center gap-2 text-primary font-bold text-sm mb-4 hover:underline";
-    backBtn.innerHTML = '<span class="material-symbols-outlined">arrow_back</span> Back to Levels';
-    backBtn.onclick = function() {
-      showView("learn");
-      document.getElementById("view-level").classList.add("hidden");
-    };
-    levelView.prepend(backBtn);
-    
     document.getElementById("view-level").classList.remove("hidden");
     document.getElementById("view-learn").classList.add("hidden");
     
     const finalContainer = document.getElementById("level-content");
     finalContainer.innerHTML = `
-      <div class="flex items-center gap-3 mt-2 mb-4">
+      <div class="flex items-center justify-between mb-6">
         <div>
           <h2 class="font-quicksand font-bold text-2xl text-primary">${title} Path</h2>
           <p class="text-sm text-on-surface-variant">Master the path nodes. Challenge the level exam at the end!</p>
         </div>
+        <button class="flex items-center gap-2 bg-surface-container border border-outline-variant text-on-surface-variant font-bold text-sm px-4 py-2 rounded-xl hover:bg-surface-container-high transition-colors" onclick="goBackToLevels()">
+          <span class="material-symbols-outlined text-sm">arrow_back</span>
+          Back to Levels
+        </button>
       </div>
 
       <div class="duo-path-container relative mt-8">
@@ -464,11 +468,15 @@ async function loadLevelContent(moduleId) {
   }
 
   container.innerHTML = `
-    <div class="flex items-center gap-3 mt-2 mb-4">
+    <div class="flex items-center justify-between mb-6">
       <div>
         <h2 class="font-quicksand font-bold text-2xl text-primary">${title} Path</h2>
         <p class="text-sm text-on-surface-variant">Master the path nodes. Challenge the level exam at the end!</p>
       </div>
+      <button class="flex items-center gap-2 bg-surface-container border border-outline-variant text-on-surface-variant font-bold text-sm px-4 py-2 rounded-xl hover:bg-surface-container-high transition-colors" onclick="goBackToLevels()">
+        <span class="material-symbols-outlined text-sm">arrow_back</span>
+        Back to Levels
+      </button>
     </div>
 
     <div class="duo-path-container relative mt-8">
@@ -516,6 +524,12 @@ async function loadLevelContent(moduleId) {
   }
 
   setTimeout(drawConnectingLine, 100);
+}
+
+function goBackToLevels() {
+  showView("learn");
+  const levelView = document.getElementById("view-level");
+  if (levelView) levelView.classList.add("hidden");
 }
 
 function drawConnectingLine() {
@@ -569,9 +583,9 @@ function showDuoTooltip(nodeEl, lesson, status) {
   if (status === "completed") actionText = "Practice again";
 
   tooltip.innerHTML = `
-    <div class="font-quicksand font-bold text-sm text-primary mb-1">${escapeHtml(lesson.title)}</div>
-    <p class="text-[10px] text-on-surface-variant leading-tight mb-2">Shape: ${escapeHtml(lesson.vocab || "")}</p>
-    <button class="w-full bg-primary text-white text-[11px] font-bold py-1.5 px-3 rounded-lg hover:bg-primary-container transition-all" onclick="openLesson('${lesson.id}')">
+    <div class="font-quicksand font-bold text-base text-primary mb-2">${escapeHtml(lesson.title)}</div>
+    <p class="text-sm text-on-surface-variant leading-tight mb-3">Shape: ${escapeHtml(lesson.vocab || "")}</p>
+    <button class="w-full bg-primary text-white text-base font-bold py-3 px-6 rounded-xl hover:bg-primary-container transition-all shadow-lg" onclick="openLessonDetail('${lesson.id}')">
       ${actionText}
     </button>
   `;
@@ -594,6 +608,97 @@ function showDuoTooltip(nodeEl, lesson, status) {
 function hideDuoTooltip() {
   const tooltip = document.getElementById("duo-tooltip");
   if (tooltip) tooltip.style.display = "none";
+}
+
+async function openLessonDetail(lessonId) {
+  stopRecognition(true);
+  quizMode = null;
+  hideFeedbackTray();
+
+  const lesson = await FSL.api("/lessons/" + lessonId);
+  
+  showView("lesson-detail");
+  
+  const container = document.getElementById("lesson-detail-content");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="max-w-3xl mx-auto">
+      <div class="flex items-center justify-between mb-4">
+        <button class="flex items-center gap-2 bg-surface-container border border-outline-variant text-on-surface-variant font-bold text-sm px-4 py-2 rounded-xl hover:bg-surface-container-high transition-colors" onclick="goBackToLevelFromLesson()">
+          <span class="material-symbols-outlined text-sm">arrow_back</span>
+          Back to Level
+        </button>
+      </div>
+      <div class="glass-card rounded-2xl p-6 border border-outline-variant/35">
+        <h2 class="font-quicksand font-bold text-2xl text-primary mb-2">${escapeHtml(lesson.title)}</h2>
+        <p class="text-sm text-on-surface-variant mb-4">${escapeHtml(lesson.description || "Learn this sign and practice with the webcam!")}</p>
+        
+        <div class="flex flex-wrap items-center gap-4 mb-6">
+          <div class="px-4 py-2 bg-surface-container rounded-xl">
+            <span class="text-xs font-bold text-on-surface-variant">Sign</span>
+            <p class="text-lg font-bold text-primary">${escapeHtml(lesson.vocab || lesson.title)}</p>
+          </div>
+          <div class="px-4 py-2 bg-surface-container rounded-xl">
+            <span class="text-xs font-bold text-on-surface-variant">Difficulty</span>
+            <p class="text-lg font-bold text-primary">${"⭐".repeat(lesson.difficulty || 1)}</p>
+          </div>
+          <div class="px-4 py-2 bg-surface-container rounded-xl">
+            <span class="text-xs font-bold text-on-surface-variant">Duration</span>
+            <p class="text-lg font-bold text-primary">${lesson.estimated_minutes || 5} min</p>
+          </div>
+        </div>
+
+        ${lesson.video_url ? `
+          <div class="mb-6">
+            <h3 class="font-quicksand font-bold text-lg text-primary mb-2">📹 Sign Video</h3>
+            <div class="rounded-xl overflow-hidden bg-slate-900 aspect-video">
+              <video class="w-full h-full object-cover" controls autoplay loop muted>
+                <source src="${escapeHtml(lesson.video_url)}" type="video/mp4" />
+              </video>
+            </div>
+          </div>
+        ` : ''}
+
+        ${lesson.image_url ? `
+          <div class="mb-6">
+            <h3 class="font-quicksand font-bold text-lg text-primary mb-2">🖼️ Sign Image</h3>
+            <div class="rounded-xl overflow-hidden border border-outline-variant/35">
+              <img src="${escapeHtml(lesson.image_url)}" alt="${escapeHtml(lesson.title)}" class="w-full h-auto" />
+            </div>
+          </div>
+        ` : ''}
+
+        ${lesson.instructions ? `
+          <div class="mb-6 p-4 bg-surface-container rounded-xl border border-outline-variant/35">
+            <h3 class="font-quicksand font-bold text-lg text-primary mb-2">📝 How to Sign</h3>
+            <p class="text-sm text-on-surface-variant whitespace-pre-line">${escapeHtml(lesson.instructions)}</p>
+          </div>
+        ` : ''}
+
+        <div class="mt-6 space-y-3">
+          <button class="w-full bg-primary text-white font-bold text-base py-4 px-6 rounded-xl btn-3d flex items-center justify-center gap-2" onclick="openLessonWebcam('${lesson.id}')">
+            <span class="material-symbols-outlined">videocam</span>
+            Practice with Webcam
+          </button>
+          
+          <button class="w-full bg-surface-container border border-outline-variant text-on-surface-variant font-bold text-base py-3 px-6 rounded-xl hover:bg-surface-container-high transition-colors" onclick="openLesson('${lesson.id}')">
+            <span class="material-symbols-outlined">visibility</span>
+            View Lesson in Current View
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function goBackToLevelFromLesson() {
+  showView("level");
+  const lessonView = document.getElementById("view-lesson-detail");
+  if (lessonView) lessonView.classList.add("hidden");
+  if (currentModule) {
+    loadLevelContent(currentModule);
+  }
 }
 
 async function openLesson(lessonId) {
@@ -633,6 +738,18 @@ async function openLesson(lessonId) {
   document.getElementById("camera-placeholder").classList.remove("hidden");
 }
 
+function openLessonWebcam(lessonId) {
+  openLesson(lessonId);
+  showView("learn");
+  setTimeout(() => {
+    const detail = document.getElementById("lesson-detail");
+    if (detail) {
+      detail.classList.remove("hidden");
+      detail.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, 100);
+}
+
 function initMediaPipe() {
   if (hands) return;
   hands = new Hands({
@@ -661,7 +778,6 @@ function startRecognition(mode, target, lessonId) {
 
   const videoElement = document.getElementById("student-webcam");
   const canvasElement = document.getElementById("student-canvas");
-  const ctx = canvasElement.getContext("2d");
 
   camera = new Camera(videoElement, {
     onFrame: async () => {
@@ -782,7 +898,7 @@ async function predictFrame(landmarks) {
             triggerConfetti();
             showFeedbackTray(true, "Level Mastered! 🎉", "Sensational job! You passed the entire Alphabet Exam challenge.");
             const area = document.getElementById("module-quiz-area");
-            area.innerHTML = "";
+            if (area) area.innerHTML = "";
           } else {
             quizTargetLetter = ALPHA_LETTERS[moduleExamIndex];
             holdStart = null;
@@ -900,7 +1016,7 @@ async function markLessonPassed(lessonId, vocab) {
           <span class="material-symbols-outlined text-4xl text-primary animate-bounce">arrow_circle_right</span>
           <h4 class="font-quicksand font-bold text-base text-primary mt-2">Next Node Unlocked</h4>
           <p class="text-xs text-on-surface-variant mt-1 mb-4">You are ready to learn: <strong>${escapeHtml(next.title)}</strong></p>
-          <button class="btn-3d w-full bg-primary text-white font-semibold text-xs py-2.5 rounded-lg uppercase" onclick="openLesson('${next.id}')">
+          <button class="btn-3d w-full bg-primary text-white font-semibold text-xs py-2.5 rounded-lg uppercase" onclick="openLessonDetail('${next.id}')">
             Continue Journey
           </button>
         </div>
@@ -975,7 +1091,7 @@ async function generateVocabularyQuiz(moduleId) {
     return;
   }
 
-  const questions = lessons.map((l, idx) => {
+  const questions = lessons.map((l) => {
     const wrong = lessons.filter(x => x.id !== l.id).map(x => x.vocab);
     const distractorPool = [...new Set(wrong)].sort(() => 0.5 - Math.random()).slice(0, 3);
     const options = [l.vocab, ...distractorPool].sort(() => 0.5 - Math.random());
