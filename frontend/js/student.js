@@ -186,21 +186,28 @@ function showView(name, el) {
     loadLearnModules();
   }
   if (name === "profile") {
-    const u = user || {};
-    document.getElementById("prof-name").value = u.full_name || "";
-    document.getElementById("prof-user").value = u.username || "";
-    document.getElementById("prof-email").value = u.email || "";
+    loadProfile();
   }
 }
-
 async function loadHome() {
   try { classrooms = await FSL.api("/classrooms/mine"); } catch { classrooms = []; }
   const grid = document.getElementById("my-classrooms");
+  
   if (!classrooms.length) {
-    grid.innerHTML = `<div class="glass-card rounded-2xl p-6 text-center col-span-full"><p class="text-on-surface-variant text-sm">You are not added in a classroom yet. Please contact your teacher.</p></div>`;
+    grid.innerHTML = `
+      <div class="col-span-full flex flex-col items-center justify-center p-12 bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl border-4 border-dashed border-primary/30">
+        <div class="text-7xl mb-4">🏫</div>
+        <h3 class="font-quicksand font-bold text-2xl text-primary mb-2">No Classroom Yet!</h3>
+        <p class="text-base text-on-surface-variant text-center max-w-md">Ask your teacher for the classroom code and join the fun learning FSL! 🎉</p>
+        <div class="mt-4 bg-yellow-100 border-2 border-yellow-400 rounded-2xl px-6 py-3">
+          <p class="text-sm font-bold text-yellow-800">💡 Tip: Look for the classroom code from your teacher</p>
+        </div>
+      </div>
+    `;
   } else {
     let modules = [];
     try { modules = await FSL.api("/modules"); } catch (_) {}
+    
     const cards = [];
     for (const c of classrooms) {
       let completed = new Set();
@@ -209,39 +216,105 @@ async function loadHome() {
         const p = Array.isArray(prog) ? prog[0] : prog;
         completed = new Set(p && p.completed_lessons ? p.completed_lessons : []);
       } catch (_) {}
+      
+      // Calculate overall progress
+      let totalLessons = 0;
+      let totalCompleted = 0;
       const levels = [];
+      
       for (const m of modules) {
         let lessons = [];
         try { lessons = await FSL.api("/lessons?module=" + m.id); } catch (_) {}
         const ids = lessons.map((l) => l.id);
         const done = ids.filter((id) => completed.has(id)).length;
         const pct = ids.length ? Math.round((done / ids.length) * 100) : 0;
-        levels.push(`<div class="mt-3">
-          <div class="flex justify-between text-xs font-bold text-on-surface-variant">
-            <span>${escapeHtml(m.title)}</span><span>${pct}%</span>
+        totalLessons += ids.length;
+        totalCompleted += done;
+        
+        // Determine emoji based on module
+        let emoji = "📚";
+        if (m.id === 'alphabet') emoji = "🔤";
+        else if (m.id === 'vocabulary' || m.id === 'basic') emoji = "🗣️";
+        else emoji = "💬";
+        
+        levels.push(`
+          <div class="bg-white/60 rounded-2xl p-3 border-2 border-primary/10">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xl">${emoji}</span>
+              <span class="text-xs font-bold text-primary flex-1">${escapeHtml(m.title)}</span>
+              <span class="text-xs font-bold text-on-surface-variant">${pct}%</span>
+            </div>
+            <div class="w-full bg-blue-100 h-3 rounded-full overflow-hidden border border-primary/10">
+              <div class="h-full bg-gradient-to-r from-primary to-green-400 rounded-full transition-all duration-500" style="width:${pct}%"></div>
+            </div>
+            <div class="flex justify-between mt-1">
+              <span class="text-[10px] text-on-surface-variant">⭐ ${done}/${ids.length} mastered</span>
+              <span class="text-[10px] text-on-surface-variant">${pct >= 70 ? '🌟 Great!' : pct >= 40 ? '💪 Keep going!' : '🌱 Starting out'}</span>
+            </div>
           </div>
-          <div class="w-full bg-surface-2 h-2.5 rounded-full overflow-hidden border border-outline-variant/35 mt-1">
-            <div class="h-full bg-gradient-to-r from-primary to-primary-container rounded-full transition-all duration-300" style="width:${pct}%"></div>
-          </div>
-          <div class="text-[10px] text-text-muted mt-0.5 font-semibold">${done}/${ids.length} signs mastered</div>
-        </div>`);
+        `);
       }
-      cards.push(`<div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
-        <div>
-          <h3 class="font-quicksand font-bold text-base text-primary">${escapeHtml(c.name)}</h3>
-          <p class="text-xs text-on-surface-variant">${escapeHtml(c.description || "")}</p>
-          <p class="text-xs text-on-surface mt-2"><span class="text-text-muted">Teacher:</span> <strong>${escapeHtml(c.teacher_name || "—")}</strong></p>
-          <span class="inline-flex items-center px-2 py-0.5 bg-tertiary-fixed text-[11px] font-bold text-on-tertiary-fixed rounded-md mt-2">🔑 ${escapeHtml(c.code || "")}</span>
+      
+      const overallPct = totalLessons ? Math.round((totalCompleted / totalLessons) * 100) : 0;
+      
+      // Get teacher name
+      const teacherName = c.teacher_name || "Your Teacher";
+      
+      cards.push(`
+        <div class="bg-white rounded-3xl p-6 shadow-xl border-2 border-primary/10 hover:shadow-2xl transition-all hover:scale-[1.02] flex flex-col">
+          <!-- Classroom Header -->
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-400 flex items-center justify-center text-white text-3xl shadow-lg">
+                🏫
+              </div>
+              <div>
+                <h3 class="font-quicksand font-bold text-xl text-primary">${escapeHtml(c.name)}</h3>
+                <p class="text-xs text-on-surface-variant">👩‍🏫 ${escapeHtml(teacherName)}</p>
+              </div>
+            </div>
+            <div class="bg-yellow-100 border-2 border-yellow-400 rounded-xl px-3 py-1.5">
+              <span class="text-xs font-bold text-yellow-800">🔑 ${escapeHtml(c.code || "")}</span>
+            </div>
+          </div>
+          
+          <!-- Overall Progress -->
+          <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 mb-4 border-2 border-primary/10">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm font-bold text-primary">📊 My Progress</span>
+              <span class="text-sm font-bold text-primary">${overallPct}%</span>
+            </div>
+            <div class="w-full bg-white h-4 rounded-full overflow-hidden border-2 border-primary/20">
+              <div class="h-full bg-gradient-to-r from-primary via-blue-400 to-green-400 rounded-full transition-all duration-700" style="width:${overallPct}%"></div>
+            </div>
+            <div class="flex justify-between mt-1">
+              <span class="text-[10px] text-on-surface-variant">🎯 ${totalCompleted} of ${totalLessons} lessons done</span>
+              <span class="text-[10px] font-bold text-primary">
+                ${overallPct >= 80 ? '🌟 Amazing progress!' : overallPct >= 50 ? '💪 You\'re doing great!' : overallPct >= 25 ? '🌱 Good start!' : '🚀 Let\'s begin!'}
+              </span>
+            </div>
+          </div>
+          
+          <!-- Level Progress -->
+          <div class="flex-1 space-y-2">
+            <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">📖 Level Progress</p>
+            ${levels.join("") || "<p class='text-xs text-text-muted text-center py-2'>No learning paths loaded</p>"}
+          </div>
+          
+          <!-- Quick Action -->
+          <div class="mt-4 pt-4 border-t-2 border-primary/10">
+            <button class="w-full bg-gradient-to-r from-primary to-blue-500 text-white font-bold text-sm py-3 px-4 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2" onclick="document.getElementById('learn-classroom').value='${c.id}'; currentClassroomId=${c.id}; showView('learn')">
+              <span class="material-symbols-outlined text-sm">play_arrow</span>
+              Continue Learning 🚀
+            </button>
+          </div>
         </div>
-        <hr class="my-4 border-outline-variant/30" />
-        <div class="space-y-1">
-          <strong class="text-xs text-on-surface font-quicksand font-bold">My level progress</strong>
-          ${levels.join("") || "<p class='text-xs text-text-muted'>No learning paths loaded</p>"}
-        </div>
-      </div>`);
+      `);
     }
     grid.innerHTML = cards.join("");
   }
+  
+  // Update classroom selector
   const sel = document.getElementById("learn-classroom");
   if (sel) {
     sel.innerHTML = classrooms.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")
@@ -251,11 +324,6 @@ async function loadHome() {
       sel.value = currentClassroomId;
     }
   }
-}
-
-function onClassroomChange() {
-  const v = document.getElementById("learn-classroom").value;
-  currentClassroomId = v ? +v : null;
 }
 
 async function refreshCompleted() {
@@ -583,8 +651,9 @@ function showDuoTooltip(nodeEl, lesson, status) {
   const containerRect = container.getBoundingClientRect();
   const nodeRect = nodeEl.getBoundingClientRect();
 
+  // Position tooltip above the node
   const left = (nodeRect.left + nodeRect.right) / 2 - containerRect.left;
-  const top = nodeRect.top - containerRect.top;
+  const top = (nodeRect.top + nodeRect.bottom) / 2 - containerRect.top;
 
   let actionText = "Start learning";
   if (status === "completed") actionText = "Practice again";
@@ -597,8 +666,10 @@ function showDuoTooltip(nodeEl, lesson, status) {
     </button>
   `;
   
-  tooltip.style.left = `${left}px`;
-  tooltip.style.top = `${top}px`;
+  // Position above the node
+  tooltip.style.left = left + "px";
+  tooltip.style.top = (top - 80) + "px";
+  tooltip.style.transform = "translateX(-50%)";
   tooltip.style.display = "block";
 
   const closeHandler = (event) => {
@@ -611,7 +682,6 @@ function showDuoTooltip(nodeEl, lesson, status) {
     document.addEventListener("click", closeHandler);
   }, 50);
 }
-
 function hideDuoTooltip() {
   const tooltip = document.getElementById("duo-tooltip");
   if (tooltip) tooltip.style.display = "none";

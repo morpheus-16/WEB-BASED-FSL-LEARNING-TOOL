@@ -142,20 +142,34 @@
 
     <main class="flex-1 p-6 md:p-8 pb-24 md:pb-8 overflow-x-hidden">
 
-      <div id="view-home" class="hidden space-y-6">
-        <div class="border-b-4 border-dashed border-primary/20 pb-4">
-          <h1 class="font-quicksand font-extrabold text-3xl text-primary">Kamusta, <span id="student-name">Student</span>! 👋</h1>
-          <p class="text-sm font-bold text-on-surface-variant font-quicksand">Join your classroom and learn signs together with friends!</p>
-        </div>
-        <div class="bg-surface-container border-2 border-outline-variant/50 p-4 rounded-2xl flex items-center gap-3">
-          <span class="material-symbols-outlined text-primary text-3xl">school</span>
-          <div>
-            <strong class="font-quicksand font-bold text-base text-primary block">Classroom Link Ready</strong>
-            <p class="text-xs text-on-surface-variant">Your teacher has set up your profile. No activation codes needed!</p>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="my-classrooms"></div>
+<div id="view-home" class="hidden space-y-6">
+  <div class="border-b-4 border-dashed border-primary/20 pb-4">
+    <div class="flex items-center gap-4">
+      <div class="text-5xl float-animation">👋</div>
+      <div>
+        <h1 class="font-quicksand font-extrabold text-3xl text-primary">Kamusta, <span id="student-name" class="text-secondary">Student</span>!</h1>
+        <p class="text-base font-bold text-on-surface-variant font-quicksand">Let's see your classroom and learning progress! 🌟</p>
       </div>
+    </div>
+  </div>
+  
+  <!-- Classroom Info Banner -->
+  <div class="bg-gradient-to-r from-blue-500 to-purple-500 rounded-3xl p-5 text-white shadow-xl">
+    <div class="flex items-center gap-4 flex-wrap">
+      <div class="text-4xl">🎯</div>
+      <div class="flex-1">
+        <p class="text-sm font-bold opacity-80">Your Learning Journey</p>
+        <p class="text-lg font-bold">Keep signing and learning! Every lesson brings you closer to mastering FSL! 💪</p>
+      </div>
+      <div class="bg-white/20 rounded-2xl px-4 py-2">
+        <span class="text-sm font-bold">⭐ Level Up!</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Classrooms Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="my-classrooms"></div>
+</div>
 
       <div id="view-learn" class="space-y-8">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-4 border-dashed border-primary/20 pb-6">

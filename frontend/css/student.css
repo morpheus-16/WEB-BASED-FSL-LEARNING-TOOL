@@ -661,3 +661,122 @@ main {
     opacity: 0;
   }
 }
+/* My Classroom - Child Friendly Styles */
+#my-classrooms {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+#my-classrooms .glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border: 2px solid rgba(0, 74, 198, 0.15);
+  border-radius: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#my-classrooms .glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 74, 198, 0.12);
+}
+
+/* Classroom Card Styles */
+.classroom-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  border: 2px solid rgba(0, 74, 198, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 74, 198, 0.06);
+  transition: all 0.3s ease;
+}
+
+.classroom-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 74, 198, 0.12);
+  border-color: rgba(0, 74, 198, 0.3);
+}
+
+/* Progress Bar Animations */
+.progress-bar-fill {
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Emoji/Icon Styles */
+.classroom-emoji {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+/* Level Progress Items */
+.level-progress-item {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 1rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 74, 198, 0.08);
+  transition: all 0.2s ease;
+}
+
+.level-progress-item:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 74, 198, 0.2);
+}
+
+/* Empty State */
+.empty-classroom {
+  background: linear-gradient(135deg, #f0f4ff, #e8eeff);
+  border: 3px dashed rgba(0, 74, 198, 0.2);
+  border-radius: 2rem;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.empty-classroom .big-emoji {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  #my-classrooms {
+    grid-template-columns: 1fr;
+  }
+  
+  .classroom-card {
+    padding: 1rem;
+  }
+}
+
+/* Fun animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+.wiggle-on-hover:hover {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+/* Progress ring pulse */
+@keyframes progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.progress-pulse {
+  animation: progress-pulse 2s ease-in-out infinite;
+}
+
+
+
