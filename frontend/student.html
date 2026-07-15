@@ -7,7 +7,7 @@
   <title>Student Dashboard · SignWise</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Quicksand:wght@500;600;700&amp;display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Quicksand:wght@500;600;700;800&amp;display=swap"
     rel="stylesheet" />
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
@@ -87,56 +87,55 @@
 
 <body class="text-on-surface min-h-screen relative flex flex-col">
 
-<nav class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-outline-variant/40 py-3 shadow-sm">
+  <nav class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-4 border-primary/20 py-3 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
       <a href="/student.html" class="flex items-center gap-3">
-        <div class="bg-primary p-2 rounded-xl text-white shadow-md">
+        <div class="bg-primary p-2.5 rounded-2xl text-white shadow-md transform hover:rotate-6 transition-transform">
           <span class="material-symbols-outlined text-2xl"
             style="font-variation-settings: 'FILL' 1;">sign_language</span>
         </div>
-        <span class="font-quicksand font-bold text-lg text-primary">SignWise <span
-            class="text-secondary text-sm font-semibold">Student</span></span>
+        <span class="font-quicksand font-extrabold text-xl text-primary tracking-wide">SignWise <span
+            class="text-secondary text-sm font-extrabold bg-secondary-fixed/50 px-2.5 py-0.5 rounded-full ml-1">Student</span></span>
       </a>
     </div>
   </nav>
+
   <div class="flex-1 max-w-7xl w-full mx-auto flex flex-col md:flex-row relative">
 
     <aside
-      class="w-64 p-6 flex flex-col hidden md:flex h-[calc(100vh-73px)] sticky top-[73px] border-r border-outline-variant/40 sidebar-nav">
+      class="w-64 p-6 flex flex-col hidden md:flex h-[calc(100vh-73px)] sticky top-[73px] border-r-4 border-outline-variant/30 sidebar-nav">
       <div class="flex-1 space-y-6">
-        <div class="flex items-center justify-between gap-1 border-b border-outline-variant/30 pb-3 mb-2">
+        <div class="flex items-center justify-between gap-1 border-b-2 border-outline-variant/30 pb-3 mb-2">
           <span
-            class="text-xs font-bold text-on-surface-variant uppercase tracking-wider sidebar-brand whitespace-nowrap">Navigation</span>
+            class="text-xs font-extrabold text-on-surface-variant uppercase tracking-wider sidebar-brand whitespace-nowrap">Navigation</span>
           <button id="btn-toggle-sidebar"
             class="p-1 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors flex items-center justify-center shrink-0"
             onclick="toggleSidebar()">
             <span class="material-symbols-outlined text-lg font-bold" id="toggle-sidebar-icon">chevron_left</span>
           </button>
         </div>
-        <ul class="space-y-2">
+        <ul class="space-y-3">
           <li>
             <button class="w-full sidebar-link active" data-view="learn" onclick="showView('learn', this)">
-              <span class="material-symbols-outlined">menu_book</span> <span class="sidebar-text">FSL Lessons</span>
+              <span class="material-symbols-outlined text-2xl">menu_book</span> <span class="sidebar-text font-quicksand font-bold text-base">FSL Lessons</span>
             </button>
           </li>
           <li>
             <button class="w-full sidebar-link" data-view="home" onclick="showView('home', this)">
-              <span class="material-symbols-outlined">meeting_room</span> <span class="sidebar-text">My Classroom</span>
+              <span class="material-symbols-outlined text-2xl">meeting_room</span> <span class="sidebar-text font-quicksand font-bold text-base">My Classroom</span>
             </button>
           </li>
         </ul>
       </div>
 
-    
-
-      <div class="px-2 space-y-2 mt-auto border-t border-outline-variant/20 pt-4">
+      <div class="px-2 space-y-2 mt-auto border-t-2 border-outline-variant/20 pt-4">
         <button class="w-full sidebar-link" data-view="profile" onclick="showView('profile', this)">
-          <span class="material-symbols-outlined">person_pin</span> <span class="sidebar-text">Profile Settings</span>
+          <span class="material-symbols-outlined text-2xl">person_pin</span> <span class="sidebar-text font-quicksand font-bold text-base">My Profile</span>
         </button>
         <button
-          class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-container text-on-surface-variant font-label-md hover:bg-outline-variant transition-colors"
+          class="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-error-container text-on-error-container font-quicksand font-bold text-sm border-b-4 border-error/50 active:translate-y-0.5 active:border-b-2 transition-all hover:bg-red-200"
           onclick="logout()">
-          <span class="material-symbols-outlined">logout</span> <span class="sidebar-text">Logout</span>
+          <span class="material-symbols-outlined text-xl">logout</span> <span class="sidebar-text">Logout</span>
         </button>
       </div>
     </aside>
@@ -144,37 +143,43 @@
     <main class="flex-1 p-6 md:p-8 pb-24 md:pb-8 overflow-x-hidden">
 
       <div id="view-home" class="hidden space-y-6">
-        <div class="border-b border-outline-variant/30 pb-4">
-          <h1 class="font-quicksand font-bold text-2xl text-primary">Kamusta, <span id="student-name">Student</span>!
-          </h1>
-          <p class="text-sm text-on-surface-variant">Here is your enrolled class. Learn and practice signs with your
-            peers!</p>
+        <div class="border-b-4 border-dashed border-primary/20 pb-4">
+          <h1 class="font-quicksand font-extrabold text-3xl text-primary">Kamusta, <span id="student-name">Student</span>! 👋</h1>
+          <p class="text-sm font-bold text-on-surface-variant font-quicksand">Join your classroom and learn signs together with friends!</p>
         </div>
-        <div class="bg-surface-container border border-outline-variant/50 p-4 rounded-2xl flex items-center gap-3">
+        <div class="bg-surface-container border-2 border-outline-variant/50 p-4 rounded-2xl flex items-center gap-3">
           <span class="material-symbols-outlined text-primary text-3xl">school</span>
           <div>
             <strong class="font-quicksand font-bold text-base text-primary block">Classroom Link Ready</strong>
-            <p class="text-xs text-on-surface-variant">Your teacher has set up your profile. No activation codes needed!
-            </p>
+            <p class="text-xs text-on-surface-variant">Your teacher has set up your profile. No activation codes needed!</p>
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="my-classrooms"></div>
       </div>
 
-      <div id="view-learn" class="space-y-6">
-        <div
-          class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/30 pb-4">
-          <div>
-            <h1 class="font-quicksand font-bold text-2xl text-primary">Lessons</h1>
-            <p class="text-sm text-on-surface-variant">Click on a module to begin. Pass lesson quizzes to level up!</p>
+      <div id="view-learn" class="space-y-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-4 border-dashed border-primary/20 pb-6">
+          <div class="flex items-center gap-3">
+            
+            <div>
+              <h1 class="font-quicksand font-extrabold text-3xl text-primary tracking-wide">FSL Adventure!</h1>
+              <p class="text-base font-extrabold text-secondary font-quicksand">Choose a level below to start your journey! ✨</p>
+            </div>
           </div>
-          <select
-            class="w-52 h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary text-xs font-semibold outline-none"
-            id="learn-classroom" onchange="onClassroomChange()"></select>
+          <div class="relative">
+            <select
+              class="w-56 h-12 pl-4 pr-10 rounded-2xl border-3 border-primary bg-tertiary-fixed text-on-tertiary-fixed font-bold text-sm outline-none shadow-[4px_4px_0px_0px_#004ac6] transition-all cursor-pointer appearance-none"
+              id="learn-classroom" onchange="onClassroomChange()"></select>
+            <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-primary">
+              <span class="material-symbols-outlined font-bold">expand_more</span>
+            </div>
+          </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="learn-modules">
-          <p class="text-muted">Loading learning modules…</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="learn-modules">
+          <p class="text-on-surface-variant font-bold text-center col-span-3 py-12 animate-pulse font-quicksand">Loading lessons...</p>
         </div>
+        
         <div id="learn-lessons" class="mt-6 space-y-4"></div>
         <div id="lesson-detail" class="hidden mt-6"></div>
         <div id="module-quiz-area" class="mt-6"></div>
@@ -216,30 +221,28 @@
   </div>
 
   <div
-    class="bottom-nav md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-outline-variant/40 shadow-lg z-50 flex justify-around items-center px-2">
+    class="bottom-nav md:hidden fixed bottom-0 left-0 right-0 h-20 bg-white/95 backdrop-blur-md border-t-4 border-outline-variant/30 shadow-lg z-50 flex justify-around items-center px-2">
     <button class="bottom-link active" data-view="learn" onclick="showView('learn', this)">
-      <span class="material-symbols-outlined">menu_book</span>
-      <span>Lessons</span>
+      <span class="material-symbols-outlined text-2xl">menu_book</span>
+      <span class="font-quicksand font-bold">Lessons</span>
     </button>
     <button class="bottom-link" data-view="home" onclick="showView('home', this)">
-      <span class="material-symbols-outlined">meeting_room</span>
-      <span>Classroom</span>
+      <span class="material-symbols-outlined text-2xl">meeting_room</span>
+      <span class="font-quicksand font-bold">Classroom</span>
     </button>
     <button class="bottom-link" data-view="profile" onclick="showView('profile', this)">
-      <span class="material-symbols-outlined">person</span>
-      <span>Profile</span>
+      <span class="material-symbols-outlined text-2xl">person</span>
+      <span class="font-quicksand font-bold">Profile</span>
     </button>
   </div>
-
-
 
   <div id="feedback-tray" class="feedback-tray">
     <div class="feedback-content">
       <div class="flex items-center gap-3">
-        <span class="material-symbols-outlined text-3xl font-bold" id="feedback-icon">check_circle</span>
+        <span class="material-symbols-outlined text-3xl font-bold animate-bounce" id="feedback-icon">check_circle</span>
         <div>
-          <h4 class="font-quicksand font-bold text-base" id="feedback-title">Correct!</h4>
-          <p class="text-xs" id="feedback-text">Keep up the great learning.</p>
+          <h4 class="font-quicksand font-bold text-lg" id="feedback-title">Correct!</h4>
+          <p class="text-sm font-semibold" id="feedback-text">Keep up the great learning.</p>
         </div>
       </div>
       <button class="feedback-btn" id="feedback-btn">Continue</button>
