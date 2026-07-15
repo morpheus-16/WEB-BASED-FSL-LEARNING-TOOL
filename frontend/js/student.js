@@ -214,33 +214,29 @@ async function refreshCompleted() {
     completedSet = new Set(p && p.completed_lessons ? p.completed_lessons : []);
   } catch (_) {}
 }
-
 async function loadLearnModules() {
   const box = document.getElementById("learn-modules");
-  box.innerHTML = `<p class="text-muted">Loading modules…</p>`;
+  box.innerHTML = `<p class="text-on-surface-variant font-bold text-center col-span-3 py-12 animate-pulse font-quicksand">Loading lessons...</p>`;
   try {
     const modules = await FSL.api("/modules");
     box.innerHTML = (modules || []).map((m) => `
-      <div class="glass-card rounded-2xl p-5 hover:-translate-y-1 hover:shadow-lg transition-all cursor-pointer border border-outline-variant/30 flex flex-col justify-between" onclick="openModule('${m.id}')">
+      <div class="glass-card rounded-2xl p-6 hover:-translate-y-1 hover:shadow-lg transition-all cursor-pointer border border-outline-variant/30 flex flex-col justify-between" onclick="openModule('${m.id}')">
         <div>
-          <div class="w-12 h-12 rounded-xl bg-surface-container text-primary flex items-center justify-center text-2xl mb-3 border border-outline-variant/40">${m.icon || "📚"}</div>
-          <h3 class="font-quicksand font-bold text-base text-primary mb-1">${escapeHtml(m.title)}</h3>
-          <p class="text-xs text-on-surface-variant line-clamp-3">${escapeHtml(m.description || "")}</p>
+          <h3 class="font-quicksand font-bold text-2xl text-primary mb-2">${escapeHtml(m.title)}</h3>
+          <p class="text-base text-on-surface-variant font-semibold leading-relaxed">${escapeHtml(m.subtitle || m.description || m.id)}</p>
         </div>
-        <div class="mt-4 pt-3 border-t border-outline-variant/30 flex items-center justify-between text-xs text-text-muted font-bold">
-          <span>${m.total_lessons || 0} lessons</span>
-          <span class="px-2 py-0.5 bg-surface-container text-[10px] uppercase rounded border border-outline-variant/30">${escapeHtml(m.subtitle || m.id)}</span>
+        <div class="mt-4 pt-3 border-t border-outline-variant/30">
+          <span class="text-lg text-on-surface-variant font-bold">${m.total_lessons || 0} lessons</span>
         </div>
-      </div>`).join("") || `<p class="text-sm text-on-surface-variant">No learning levels available</p>`;
+      </div>`).join("") || `<p class="text-sm text-on-surface-variant text-center col-span-3 py-12">No learning levels available</p>`;
     document.getElementById("learn-lessons").innerHTML = "";
     document.getElementById("lesson-detail").classList.add("hidden");
     document.getElementById("module-quiz-area").innerHTML = "";
     stopRecognition(true);
   } catch (e) {
-    box.innerHTML = `<p style="color:var(--danger)">${escapeHtml(e.message)}</p>`;
+    box.innerHTML = `<p class="text-error font-bold text-center col-span-3 py-12">${escapeHtml(e.message)}</p>`;
   }
 }
-
 // ---------------- DUOLINGO SNAKE PATH GENERATOR ----------------
 async function openModule(moduleId) {
   currentModule = moduleId;
@@ -302,20 +298,16 @@ async function openModule(moduleId) {
       </div>
     </div>
 
-    <!-- Winding Path Area -->
     <div class="duo-path-container relative mt-8">
-      <!-- Connection SVGs line background -->
       <svg class="duo-svg-path" id="duo-svg-path" viewBox="0 0 400 ${moduleLessonList.length * 110}">
         <path id="duo-line-path" d="" fill="none" stroke="#e5eefd" stroke-dasharray="8 6" stroke-width="6" stroke-linecap="round"/>
       </svg>
       
       ${nodesHtml}
       
-      <!-- Duolingo Tooltip -->
       <div id="duo-tooltip" class="duo-tooltip"></div>
     </div>
 
-    <!-- Level challenge footer -->
     <div class="glass-card rounded-2xl p-6 mt-8 border border-outline-variant/35 flex flex-col items-center justify-center text-center max-w-md mx-auto relative z-10" id="module-exam-card">
       <span class="material-symbols-outlined text-4xl text-primary mb-2">military_tech</span>
       <h3 class="font-quicksand font-bold text-lg text-primary mb-1">Level Challenge</h3>
@@ -379,11 +371,11 @@ function drawConnectingLine() {
 
   if (points.length < 2) return;
 
-  // Generate SVG path string with smooth bezier control curves
+  // Render curvy snake path line through the points
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[i];
-    const p1 = points[i+1];
+    const p1 = points[i + 1];
     const cpY1 = p0.y + 40;
     const cpY2 = p1.y - 40;
     d += ` C ${p0.x} ${cpY1}, ${p1.x} ${cpY2}, ${p1.x} ${p1.y}`;
@@ -392,54 +384,46 @@ function drawConnectingLine() {
   pathEl.setAttribute("d", d);
 }
 
-// Recalculate curve line on screen resize
+// Recalculate winding paths on window resize
 window.addEventListener("resize", () => {
-  drawConnectingLine();
-  hideDuoTooltip();
+  if (currentModule) drawConnectingLine();
 });
 
-// ---------------- DUOLINGO TOOLTIP POPOVER ----------------
+// ---------------- SHOW TOOLTIP ON CLICK ----------------
 function showDuoTooltip(nodeEl, lesson, status) {
   const tooltip = document.getElementById("duo-tooltip");
   if (!tooltip) return;
 
+  const container = document.querySelector(".duo-path-container");
+  const containerRect = container.getBoundingClientRect();
   const nodeRect = nodeEl.getBoundingClientRect();
-  const parentRect = nodeEl.offsetParent.getBoundingClientRect();
-  
-  // Set display block first to get accurate offsetWidth if needed
-  tooltip.style.display = "block";
-  const tooltipWidth = tooltip.offsetWidth || 260;
-  
-  // Calculate center offsets relative to the parent container
-  const left = nodeRect.left - parentRect.left + (nodeRect.width / 2) - (tooltipWidth / 2);
-  const top = nodeRect.bottom - parentRect.top + 12;
 
-  tooltip.style.left = `${left}px`;
-  tooltip.style.top = `${top}px`;
-  
-  const subtitle = status === "completed" ? "✓ Mastered (+10 XP)" : "Start Practice (+10 XP)";
-  const btnText = status === "completed" ? "Practice Again" : "Start Lesson";
+  // Position tooltip centrally above node
+  const left = (nodeRect.left + nodeRect.right) / 2 - containerRect.left;
+  const top = nodeRect.top - containerRect.top;
+
+  let actionText = "Start learning";
+  if (status === "completed") actionText = "Practice again";
 
   tooltip.innerHTML = `
-    <div class="text-[10px] uppercase font-bold text-primary tracking-wider mb-1">${subtitle}</div>
-    <h4 class="font-quicksand font-bold text-sm text-on-surface mb-2">${escapeHtml(lesson.title)}</h4>
-    <p class="text-[11px] text-on-surface-variant mb-4 leading-relaxed">${escapeHtml(lesson.description || "Learn FSL fingerspelling shapes.")}</p>
-    <button class="feedback-btn feedback-btn-correct w-full text-xs py-2" id="tooltip-start-btn">${btnText}</button>
+    <div class="font-quicksand font-bold text-sm text-primary mb-1">${escapeHtml(lesson.title)}</div>
+    <p class="text-[10px] text-on-surface-variant leading-tight mb-2">Shape: ${escapeHtml(lesson.vocab || "")}</p>
+    <button class="w-full bg-primary text-white text-[11px] font-bold py-1.5 px-3 rounded-lg hover:bg-primary-container transition-all" onclick="openLesson('${lesson.id}')">
+      ${actionText}
+    </button>
   `;
+  
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+  tooltip.style.display = "block";
 
-  document.getElementById("tooltip-start-btn").onclick = () => {
-    hideDuoTooltip();
-    openLesson(lesson.id);
-  };
-
-  // Close tooltip when clicking outside
+  // Close tooltip if clicked elsewhere
   const closeHandler = (event) => {
     if (!tooltip.contains(event.target) && !nodeEl.contains(event.target)) {
       hideDuoTooltip();
       document.removeEventListener("click", closeHandler);
     }
   };
-  
   // Delay slightly to prevent immediate auto-closing from same click event
   setTimeout(() => {
     document.addEventListener("click", closeHandler);
@@ -460,467 +444,206 @@ async function openLesson(lessonId) {
   const lesson = await FSL.api("/lessons/" + lessonId);
   const detail = document.getElementById("lesson-detail");
   detail.classList.remove("hidden");
-  const idx = moduleLessonList.findIndex((l) => l.id === lessonId);
-  const big = escapeHtml(lesson.sign || lesson.title || "");
   
-  detail.innerHTML = `
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-      <div class="lg:col-span-7 flex justify-center items-center p-4 bg-slate-900 rounded-2xl aspect-video border-3 border-outline-variant shadow-sm relative overflow-hidden" style="max-height: 380px;">
-        ${lesson.image_placeholder ? `
-          <img src="${escapeHtml(lesson.image_placeholder)}" alt="${big}" style="max-height:100%; object-fit:contain; border-radius:12px; display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'" />
-          <div class="placeholder flex flex-col items-center justify-center text-center" style="display:none">
-            <div class="font-quicksand font-bold text-6xl text-white mb-2">${big}</div>
-            <p class="text-xs text-outline-variant">Visual sign visualizer placeholder</p>
-          </div>` : `
-          <div class="placeholder flex flex-col items-center justify-center text-center">
-            <div class="font-quicksand font-bold text-8xl text-white mb-2">${big}</div>
-            <p class="text-xs text-outline-variant">Visual sign visualizer placeholder</p>
-          </div>`}
-      </div>
-      <div class="lg:col-span-5 glass-card rounded-2xl p-6 flex flex-col justify-between">
-        <div>
-          <span class="inline-block px-2.5 py-0.5 bg-surface-container text-primary font-bold text-xs uppercase rounded border border-outline-variant/40">${escapeHtml(lesson.module || "")} · Node ${idx + 1}/${moduleLessonList.length}</span>
-          <h2 class="font-quicksand font-bold text-xl text-primary mt-3 mb-2">${escapeHtml(lesson.title)}</h2>
-          <p class="text-xs text-on-surface-variant leading-relaxed mb-4">${escapeHtml(lesson.description || "")}</p>
-          ${lesson.tips ? `<p class="text-xs text-on-surface font-medium bg-tertiary-fixed/60 border border-outline-variant/40 p-3 rounded-xl"><strong>Vocabulary Tip:</strong> ${escapeHtml(lesson.tips)}</p>` : ""}
-        </div>
-        <div class="flex flex-wrap gap-2 mt-6">
-          <button class="btn-3d bg-primary text-white font-semibold text-xs py-3 px-6 rounded-xl flex items-center gap-1 uppercase tracking-wide" type="button" id="btn-lesson-quiz">Take practice quiz</button>
-          <button class="px-4 py-2 border border-outline rounded-lg text-xs font-bold bg-surface-container hover:bg-surface-container-high transition-colors" type="button" onclick="document.getElementById('lesson-detail').classList.add('hidden')">Close panel</button>
-        </div>
-      </div>
-    </div>`;
+  // Smooth scroll down to interactive viewport
   detail.scrollIntoView({ behavior: "smooth", block: "start" });
-  document.getElementById("btn-lesson-quiz").onclick = () => startLessonQuiz(lesson);
-}
 
-// ---------------- LESSON QUIZZES ----------------
-function startLessonQuiz(lesson) {
-  const area = document.getElementById("module-quiz-area");
-  document.getElementById("lesson-detail").classList.add("hidden");
-  hideFeedbackTray();
-
-  if (lesson.module === "alphabet") {
-    quizMode = "lesson";
-    quizLessonId = lesson.id;
-    quizTargetLetter = (lesson.sign || "").toUpperCase();
-    holdStart = null;
-    area.innerHTML = `
-      <div class="glass-card rounded-2xl p-5 mb-6 border border-primary-border">
-        <h2 class="font-quicksand font-bold text-lg text-primary flex items-center gap-1.5"><span class="material-symbols-outlined text-xl">videocam</span> Show sign shape: <span style="font-size:2.2rem;font-weight:800;color:#004ac6">${escapeHtml(quizTargetLetter)}</span></h2>
-        <p class="text-xs text-on-surface-variant leading-relaxed">Turn on your camera and show the hand shape. Hold still for 3 seconds while the loader ring fills up!</p>
-      </div>
-      ${cameraPanelHTML()}`;
-    area.scrollIntoView({ behavior: "smooth", block: "start" });
-    bindCameraButtons();
-    setTimeout(() => startRecognition(), 300);
+  document.getElementById("lesson-title").textContent = lesson.title;
+  document.getElementById("lesson-vocab").textContent = lesson.vocab;
+  
+  const videoPlaceholder = document.getElementById("video-placeholder");
+  if (lesson.video_url) {
+    videoPlaceholder.innerHTML = `
+      <video class="w-full h-full object-cover rounded-2xl border border-outline-variant/35" controls autoplay loop muted>
+        <source src="${escapeHtml(lesson.video_url)}" type="video/mp4" />
+      </video>
+    `;
   } else {
-    startLessonMcq(lesson);
-  }
-}
-
-function cameraPanelHTML() {
-  return `
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-      <div class="lg:col-span-7 camera-box" id="quiz-camera-box">
-        <div class="placeholder flex flex-col items-center justify-center" id="cam-placeholder" style="position:absolute;inset:0;color:#b8cfe0;z-index:2;background:rgba(15,28,42,0.9)">
-          <span class="material-symbols-outlined text-4xl mb-1">videocam</span>
-          <span class="text-xs font-semibold">Click Start Camera below</span>
-        </div>
-        <video id="input-video" playsinline muted></video>
-        <canvas id="output-canvas"></canvas>
-        <div class="ring-overlay">
-          <svg viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="8"/>
-            <circle id="hold-ring-fg" cx="50" cy="50" r="42" fill="none" stroke="#60a5fa" stroke-width="8"
-              stroke-linecap="round" transform="rotate(-90 50 50)"
-              style="stroke-dasharray:264;stroke-dashoffset:264"/>
-          </svg>
-        </div>
+    // Default placeholder card structure
+    videoPlaceholder.innerHTML = `
+      <div class="flex flex-col items-center text-center p-6 bg-slate-900/10 rounded-2xl justify-center h-full w-full">
+        <span class="material-symbols-outlined text-4xl text-outline-variant">movie</span>
+        <p class="text-xs text-on-surface-variant font-medium mt-1">Video sign demo not loaded.</p>
       </div>
-      <div class="lg:col-span-5 glass-card rounded-2xl p-6 flex flex-col items-center justify-center min-h-[280px] text-center">
-        <div class="recog-status mb-4 inline-flex items-center gap-1.5 px-3 py-1 bg-surface-container border border-outline-variant text-[11px] font-bold text-on-surface-variant uppercase rounded-full" id="recog-status">Camera ready</div>
-        <div class="flex gap-2 w-full mt-4 justify-center">
-          <button class="btn-3d bg-primary text-white font-semibold text-xs py-2 px-4 rounded-xl flex items-center gap-1 uppercase tracking-wide" type="button" id="btn-start-cam">Start Camera</button>
-          <button class="bg-surface-container border border-outline text-on-surface-variant font-semibold text-xs py-2 px-4 rounded-xl flex items-center gap-1 uppercase tracking-wide hover:bg-surface-container-high transition-colors" type="button" id="btn-stop-cam" disabled>Stop</button>
-        </div>
-        <p class="text-xs text-on-surface-variant mt-6 leading-relaxed">Position your hand clearly in front of the lens in a well-lit space. Let's do it!</p>
-      </div>
-    </div>`;
-}
-
-function bindCameraButtons() {
-  const bs = document.getElementById("btn-start-cam");
-  const be = document.getElementById("btn-stop-cam");
-  if (bs) bs.onclick = () => startRecognition();
-  if (be) be.onclick = () => stopRecognition(false);
-}
-
-function updateHoldRing(pct) {
-  const ring = document.getElementById("hold-ring-fg");
-  if (!ring) return;
-  const c = 2 * Math.PI * 42;
-  ring.style.strokeDasharray = c;
-  ring.style.strokeDashoffset = String(c * (1 - Math.min(1, Math.max(0, pct))));
-}
-
-// ---------------- DUOLINGO FEEDBACK SLIDE UP TRAY ----------------
-function showFeedbackTray(isCorrect, title, desc, onContinue) {
-  const tray = document.getElementById("feedback-tray");
-  const icon = document.getElementById("feedback-icon");
-  const titleEl = document.getElementById("feedback-title");
-  const descEl = document.getElementById("feedback-text");
-  const btn = document.getElementById("feedback-btn");
-
-  if (!tray) return;
-
-  // Toggle feedback state styling classes
-  if (isCorrect) {
-    tray.className = "feedback-tray correct";
-    icon.textContent = "check_circle";
-    icon.className = "material-symbols-outlined text-4xl text-green-700 font-bold";
-    titleEl.className = "font-quicksand font-bold text-lg text-green-900";
-    descEl.className = "text-xs text-green-800 font-semibold";
-    btn.className = "feedback-btn feedback-btn-correct";
-    updateSigny("happy");
-  } else {
-    tray.className = "feedback-tray incorrect";
-    icon.textContent = "error";
-    icon.className = "material-symbols-outlined text-4xl text-red-700 font-bold";
-    titleEl.className = "font-quicksand font-bold text-lg text-red-900";
-    descEl.className = "text-xs text-red-800 font-semibold";
-    btn.className = "feedback-btn feedback-btn-incorrect";
-    updateSigny("sad");
+    `;
   }
 
-  titleEl.textContent = title;
-  descEl.textContent = desc;
-
-  btn.onclick = () => {
-    hideFeedbackTray();
-    if (onContinue) onContinue();
-  };
-}
-
-function hideFeedbackTray() {
-  const tray = document.getElementById("feedback-tray");
-  if (tray) tray.className = "feedback-tray";
-}
-
-// ---------------- MARKING LESSON AS COMPLETED ----------------
-async function markLessonPassed(lessonId, vocab) {
-  if (currentClassroomId) {
-    try {
-      await FSL.api("/progress/complete-lesson", {
-        method: "POST",
-        body: { classroom_id: currentClassroomId, lesson_id: lessonId, vocabulary: vocab || null },
-      });
-    } catch (e) { console.warn(e); }
-  }
-  completedSet.add(lessonId);
-  triggerConfetti();
+  // Preset lesson practice details 
+  document.getElementById("webcam-target-hint").textContent = "Show sign shape: " + lesson.vocab;
+  document.getElementById("btn-start-recognition").onclick = () => startRecognition("lesson", lesson.vocab, lesson.id);
   
-  const idx = moduleLessonList.findIndex((l) => l.id === lessonId);
-  const next = idx >= 0 ? moduleLessonList[idx + 1] : null;
+  // Clear camera feeds
+  document.getElementById("webcam-preview").classList.add("hidden");
+  document.getElementById("camera-placeholder").classList.remove("hidden");
+}
 
-  showFeedbackTray(true, "Lesson Passed!", "Fantastic! You've mastered this node progress path.", () => {
-    stopRecognition(true);
-    if (next) {
-      document.getElementById("module-quiz-area").innerHTML =
-        `<div class="glass-card rounded-2xl p-4 text-center text-sm font-semibold">Loading next node path…</div>`;
-      setTimeout(() => openLesson(next.id), 300);
-    } else {
-      openModule(currentModule);
-    }
+// ---------------- MEDIA RECOGNITION (Webcam & MediaPipe) ----------------
+function initMediaPipe() {
+  if (hands) return; // already loaded
+  hands = new Hands({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
   });
-}
-
-// ---------------- INTERACTIVE MCQ LAYOUT ----------------
-function startLessonMcq(lesson) {
-  const area = document.getElementById("module-quiz-area");
-  const correct = lesson.sign || lesson.title;
-  const others = moduleLessonList
-    .filter((l) => l.id !== lesson.id)
-    .map((l) => l.sign || l.title)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 3);
-  const options = [correct, ...others].sort(() => Math.random() - 0.5);
   
-  area.innerHTML = `
-    <div class="glass-card rounded-2xl p-6 space-y-4" style="margin-top:2rem;">
-      <span class="inline-block px-2.5 py-0.5 bg-secondary-container/40 text-secondary-fixed-dim font-bold text-xs uppercase rounded border border-outline-variant/40">Node quiz</span>
-      <div class="flex flex-col justify-center items-center aspect-video max-h-[180px] bg-slate-900 rounded-xl" style="margin:1.25rem 0;">
-        <div class="placeholder flex flex-col items-center">
-          <span class="material-symbols-outlined text-white text-3xl mb-1">movie</span>
-          <div class="font-quicksand font-bold text-white text-sm">Visual Clue</div>
-          <p class="text-[11px] text-outline-variant font-medium">${escapeHtml(lesson.description || "")}</p>
-        </div>
-      </div>
-      <h3 class="font-quicksand font-bold text-base text-on-surface">What does this FSL sign represent?</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="lesson-mcq-opts">
-        ${options.map((o) => `
-          <div class="option hover:bg-surface-container flex items-center justify-between border border-outline p-4 rounded-xl cursor-pointer text-xs font-semibold select-none transition-all active:scale-[0.98]" data-opt="${escapeHtml(o)}">
-            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-primary">arrow_right</span> ${escapeHtml(o)}</span>
-          </div>
-        `).join("")}
-      </div>
-    </div>`;
-    
-  area.querySelectorAll(".option").forEach((el) => {
-    el.addEventListener("click", () => {
-      // Remove other select highlights
-      area.querySelectorAll(".option").forEach(o => o.className = "option hover:bg-surface-container flex items-center justify-between border border-outline p-4 rounded-xl cursor-pointer text-xs font-semibold select-none transition-all active:scale-[0.98]");
-      el.className = "option bg-primary-container text-on-primary-container flex items-center justify-between border-2 border-primary p-4 rounded-xl cursor-pointer text-xs font-bold select-none transition-all";
-      
-      const isRight = el.dataset.opt === correct;
-      if (isRight) {
-        showFeedbackTray(true, "Amazing Job!", "That is the correct meaning of this sign!", () => {
-          markLessonPassed(lesson.id, correct);
-        });
-      } else {
-        showFeedbackTray(false, "Let's Review", `Correct answer: ${correct}. Show correct hand shape!`, () => {
-          // Allow re-selecting
-          el.className = "option hover:bg-surface-container flex items-center justify-between border border-outline p-4 rounded-xl cursor-pointer text-xs font-semibold select-none transition-all active:scale-[0.98]";
-        });
-      }
-    });
+  hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5
   });
-  area.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  hands.onResults(onHandResults);
 }
 
-// ---------------- MODULE LEVEL CHALLENGE EXAMS ----------------
-function startModuleExam(moduleId) {
-  const allDone = moduleLessonList.every((l) => completedSet.has(l.id));
-  if (!allDone) {
-    FSL.toast("Complete all sign nodes first!", "error");
-    return;
-  }
-  hideFeedbackTray();
-  if (moduleId === "alphabet") {
-    quizMode = "module";
-    moduleExamIndex = 0;
-    quizTargetLetter = ALPHA_LETTERS[0];
-    holdStart = null;
-    const area = document.getElementById("module-quiz-area");
-    area.innerHTML = `
-      <div class="glass-card rounded-2xl p-6 mb-6">
-        <h2 class="font-quicksand font-bold text-xl text-primary">Big Challenge: fingerspell letter <span style="color:#004ac6;font-size:3rem;font-weight:800;" id="exam-letter">${quizTargetLetter}</span></h2>
-        <p class="text-xs text-on-surface-variant">Letter <span id="exam-progress" class="font-bold text-on-surface">1</span> of ${ALPHA_LETTERS.length}. Hold correct shape for 3 seconds.</p>
-      </div>
-      ${cameraPanelHTML()}`;
-    bindCameraButtons();
-    setTimeout(() => startRecognition(), 300);
-  } else {
-    startModuleMcqExam(moduleId);
-  }
-  document.getElementById("module-quiz-area").scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-async function startModuleMcqExam(moduleId) {
-  const area = document.getElementById("module-quiz-area");
-  try {
-    const quizzes = await FSL.api("/quizzes?module=" + moduleId);
-    if (!quizzes.length) {
-      area.innerHTML = `<p class="text-muted">No exam contents built.</p>`;
-      return;
-    }
-    const full = await FSL.api("/quizzes/" + quizzes[0].id);
-    window._mcq = { quiz: full, answers: {}, idx: 0 };
-    renderModuleMcq();
-  } catch (e) {
-    area.innerHTML = `<p style="color:var(--danger)">${escapeHtml(e.message)}</p>`;
-  }
-}
-
-function renderModuleMcq() {
-  const area = document.getElementById("module-quiz-area");
-  const st = window._mcq;
-  const qs = st.quiz.questions || [];
-  
-  if (st.idx >= qs.length) {
-    let correct = 0;
-    qs.forEach((q) => { if (st.answers[q.id] === q.correct) correct++; });
-    const score = Math.round((correct / qs.length) * 100);
-    const pass = score >= (st.quiz.passing_score || 70);
-    
-    if (pass) {
-      triggerConfetti();
-      updateSigny("happy");
-    } else {
-      updateSigny("sad");
-    }
-
-    area.innerHTML = `<div class="glass-card rounded-2xl p-8 text-center space-y-4">
-      <span class="material-symbols-outlined text-4xl text-primary">${pass ? 'celebration' : 'sentiment_very_dissatisfied'}</span>
-      <h2 class="font-quicksand font-bold text-2xl text-primary">Your Score: ${score}%</h2>
-      <h3 class="font-quicksand font-bold text-base text-on-surface">${pass ? "Level Challenge Cleared!" : "Keep practicing!"}</h3>
-      <p class="text-xs text-on-surface-variant max-w-sm mx-auto">${pass ? "Awesome! You passed the level exam and completed this module." : "Not yet passing. Review path nodes and try again!"}</p>
-      <button class="btn-3d bg-primary text-white font-semibold text-xs py-3 px-8 rounded-xl uppercase tracking-wider mt-4" type="button" onclick="saveExamScore(${st.quiz.id},${score})">Save score & exit</button>
-    </div>`;
-    return;
-  }
-  
-  const q = qs[st.idx];
-  area.innerHTML = `
-    <div class="glass-card rounded-2xl p-6 space-y-4">
-      <span class="inline-block px-2 py-0.5 bg-surface-container text-primary font-bold text-xs uppercase rounded border border-outline-variant/30">Level Quiz Q ${st.idx + 1}/${qs.length}</span>
-      <div class="flex flex-col justify-center items-center aspect-video max-h-[160px] bg-slate-900 rounded-xl" style="margin:1.25rem 0;">
-        <div class="placeholder flex flex-col items-center"><span class="material-symbols-outlined text-white text-3xl mb-1">movie</span>
-          <div class="font-quicksand font-bold text-white text-xs">${escapeHtml(q.sign_hint || "Visual Hint")}</div></div>
-      </div>
-      <h3 class="font-quicksand font-bold text-base text-on-surface">${escapeHtml(q.question)}</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="exam-mcq-options">
-        ${(q.options || []).map((o) => `
-          <div class="option hover:bg-surface-container flex items-center justify-between border border-outline p-4 rounded-xl cursor-pointer text-xs font-semibold select-none transition-all active:scale-[0.98]" data-qid="${escapeHtml(q.id)}" data-opt="${escapeHtml(o)}">
-            <span>${escapeHtml(o)}</span>
-          </div>
-        `).join("")}
-      </div>
-    </div>`;
-
-  area.querySelectorAll(".option").forEach((el) => {
-    el.onclick = () => {
-      // Highlight selected
-      area.querySelectorAll(".option").forEach(o => o.className = "option hover:bg-surface-container flex items-center justify-between border border-outline p-4 rounded-xl cursor-pointer text-xs font-semibold select-none transition-all active:scale-[0.98]");
-      el.className = "option bg-primary-container text-on-primary-container flex items-center justify-between border-2 border-primary p-4 rounded-xl cursor-pointer text-xs font-bold select-none transition-all";
-      
-      const isRight = el.dataset.opt === q.correct;
-      st.answers[el.dataset.qid] = el.dataset.opt;
-      
-      if (isRight) {
-        showFeedbackTray(true, "Correct!", "Awesome! Moving to next challenge.", () => {
-          st.idx++;
-          renderModuleMcq();
-        });
-      } else {
-        showFeedbackTray(false, "Incorrect", `The correct answer was: ${q.correct}`, () => {
-          st.idx++;
-          renderModuleMcq();
-        });
-      }
-    };
-  });
-}
-
-async function saveExamScore(quizId, score) {
-  try {
-    if (currentClassroomId) {
-      await FSL.api("/quizzes/submit", {
-        method: "POST",
-        body: { classroom_id: currentClassroomId, quiz_id: quizId, score, answers: window._mcq?.answers || {} },
-      });
-    }
-    FSL.toast("Exam saved: " + score + "%");
-    openModule(currentModule);
-  } catch (e) { FSL.toast(e.message, "error"); }
-}
-
-// ---------------- WEBCAM RECOGNITION HANDLERS ----------------
-async function startRecognition() {
-  const video = document.getElementById("input-video");
-  if (!video) { FSL.toast("Camera panel not ready", "error"); return; }
+function startRecognition(mode, target, lessonId) {
   if (recognizing) return;
-  const placeholder = document.getElementById("cam-placeholder");
-  const bs = document.getElementById("btn-start-cam");
-  const be = document.getElementById("btn-stop-cam");
-  if (bs) bs.disabled = true;
-  try {
-    if (camera) { try { camera.stop(); } catch (_) {} camera = null; }
-    hands = new Hands({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
-    hands.onResults(onHandResults);
-    camera = new Camera(video, {
-      onFrame: async () => { if (hands && recognizing) await hands.send({ image: video }); },
-      width: 640, height: 480,
-    });
-    await camera.start();
-    recognizing = true;
-    if (placeholder) placeholder.style.display = "none";
-    if (be) be.disabled = false;
-    const st = document.getElementById("recog-status");
-    if (st) st.textContent = "● Live — show sign";
-  } catch (err) {
-    console.error(err);
-    if (bs) bs.disabled = false;
-    FSL.toast("Camera: " + err.message, "error");
-  }
-}
-
-function stopRecognition(clearQuiz) {
-  recognizing = false;
+  initMediaPipe();
+  
+  quizMode = mode;
+  quizTargetLetter = target ? target.trim().toUpperCase() : null;
+  quizLessonId = lessonId;
   holdStart = null;
   updateHoldRing(0);
-  if (camera) { try { camera.stop(); } catch (_) {} camera = null; }
-  hands = null;
-  const video = document.getElementById("input-video");
-  if (video && video.srcObject) {
-    video.srcObject.getTracks().forEach((t) => t.stop());
-    video.srcObject = null;
-  }
-  const placeholder = document.getElementById("cam-placeholder");
-  if (placeholder) placeholder.style.display = "flex";
-  const bs = document.getElementById("btn-start-cam");
-  const be = document.getElementById("btn-stop-cam");
-  if (bs) bs.disabled = false;
-  if (be) be.disabled = true;
-  if (clearQuiz) quizMode = null;
+
+  const videoElement = document.getElementById("student-webcam");
+  const canvasElement = document.getElementById("student-canvas");
+  const ctx = canvasElement.getContext("2d");
+
+  camera = new Camera(videoElement, {
+    onFrame: async () => {
+      if (!recognizing) return;
+      await hands.send({ image: videoElement });
+    },
+    width: 640,
+    height: 480
+  });
+
+  recognizing = true;
+  camera.start();
+
+  // Switch display elements
+  document.getElementById("webcam-preview").classList.remove("hidden");
+  document.getElementById("camera-placeholder").classList.add("hidden");
+  document.getElementById("btn-start-recognition").classList.add("hidden");
+  document.getElementById("btn-stop-recognition").classList.remove("hidden");
+  
+  updateSigny("neutral");
 }
 
-function onHandResults(results) {
-  const video = document.getElementById("input-video");
-  const canvas = document.getElementById("output-canvas");
-  if (!canvas || !video) return;
-  canvas.width = video.videoWidth || 640;
-  canvas.height = video.videoHeight || 480;
-  const ctx = canvas.getContext("2d");
-  ctx.save();
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-  ctx.restore();
+function stopRecognition(silent = false) {
+  recognizing = false;
+  if (camera) {
+    try { camera.stop(); } catch (_) {}
+    camera = null;
+  }
+  
+  const webPreview = document.getElementById("webcam-preview");
+  if (webPreview) webPreview.classList.add("hidden");
+  
+  const camPlaceholder = document.getElementById("camera-placeholder");
+  if (camPlaceholder) camPlaceholder.classList.remove("hidden");
+  
+  const btnStart = document.getElementById("btn-start-recognition");
+  if (btnStart) btnStart.classList.remove("hidden");
+  
+  const btnStop = document.getElementById("btn-stop-recognition");
+  if (btnStop) btnStop.classList.add("hidden");
 
+  holdStart = null;
+  updateHoldRing(0);
+
+  if (!silent) {
+    FSL.toast("Camera feed paused.");
+  }
+}
+
+function updateHoldRing(percentage) {
+  const ring = document.getElementById("hold-progress-ring");
+  if (!ring) return;
+  const val = Math.min(100, Math.max(0, percentage));
+  ring.style.width = val + "%";
+}
+
+// ---------------- CANVAS KEYPOINT RENDERING & PREDICTIONS ----------------
+async function onHandResults(results) {
+  if (!recognizing) return;
+  
+  const canvasElement = document.getElementById("student-canvas");
+  const ctx = canvasElement.getContext("2d");
+  
+  // Clear Canvas
+  ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+  
   if (results.multiHandLandmarks && results.multiHandLandmarks.length) {
+    // Draw joints visual lines locally
+    for (const landmarks of results.multiHandLandmarks) {
+      drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: '#004ac6', lineWidth: 3 });
+      drawLandmarks(ctx, landmarks, { color: '#86f2e4', lineWidth: 1, radius: 3 });
+    }
+
     const now = Date.now();
-    if (now - lastSend >= SEND_INTERVAL_MS) {
+    if (now - lastSend > SEND_INTERVAL_MS) {
       lastSend = now;
-      const flat = [];
-      for (const lm of results.multiHandLandmarks[0]) flat.push(lm.x, lm.y, lm.z);
-      sendLandmarks(flat);
+      const landmarks = results.multiHandLandmarks[0];
+      await predictFrame(landmarks);
     }
   } else {
-    holdStart = null;
-    updateHoldRing(0);
+    // No hands present - decay hold progress bar
+    if (holdStart) {
+      holdStart = null;
+      updateHoldRing(0);
+    }
+    const st = document.getElementById("webcam-target-hint");
+    if (st && quizTargetLetter) {
+      st.textContent = `Show letter: ${quizTargetLetter} (Searching for hands...)`;
+    }
   }
 }
 
-async function sendLandmarks(flat) {
-  if (!quizMode || !quizTargetLetter) return;
+async function predictFrame(landmarks) {
   try {
-    const res = await FSL.api("/recognize", { method: "POST", body: { landmarks: flat } });
-    const letter = (res.letter || "?").toString().toUpperCase();
-    const st = document.getElementById("recog-status");
-    if (letter === quizTargetLetter) {
-      if (!holdStart) holdStart = Date.now();
+    const res = await FSL.api("/predict", {
+      method: "POST",
+      body: { landmarks }
+    });
+    
+    const letter = res.letter;
+    const st = document.getElementById("webcam-target-hint");
+
+    if (letter && letter.toUpperCase() === quizTargetLetter) {
+      if (!holdStart) {
+        holdStart = Date.now();
+      }
+      
       const elapsed = Date.now() - holdStart;
-      updateHoldRing(elapsed / HOLD_MS);
-      if (st) st.textContent = "Great! Hold shape " + quizTargetLetter + "… " + Math.min(3, elapsed / 1000).toFixed(1) + "s";
+      const pct = (elapsed / HOLD_MS) * 100;
+      updateHoldRing(pct);
+
+      if (st) st.textContent = `Recognized target: ${letter}! Hold sign ... ${Math.max(0, Math.ceil((HOLD_MS - elapsed) / 1000))}s`;
+
       if (elapsed >= HOLD_MS) {
-        holdStart = null;
-        updateHoldRing(0);
+        // Mastered / passed node trigger!
+        stopRecognition(true);
+        updateSigny("happy");
+        
         if (quizMode === "lesson") {
           await markLessonPassed(quizLessonId, quizTargetLetter);
         } else if (quizMode === "module") {
+          // Progress level quiz sequence 
           moduleExamIndex++;
           if (moduleExamIndex >= ALPHA_LETTERS.length) {
+            // Complete exam level
             triggerConfetti();
-            stopRecognition(true);
-            showFeedbackTray(true, "Level Challenge Complete!", "Outstanding! You fingerspelled every letter perfectly.", () => {
-              saveExamScore(1, 100);
-            });
+            showFeedbackTray(true, "Level Mastered! 🎉", "Sensational job! You passed the entire Alphabet Exam challenge.");
+            const area = document.getElementById("module-quiz-area");
+            area.innerHTML = "";
           } else {
             quizTargetLetter = ALPHA_LETTERS[moduleExamIndex];
-            const el = document.getElementById("exam-letter");
-            const pr = document.getElementById("exam-progress");
-            if (el) el.textContent = quizTargetLetter;
+            holdStart = null;
+            updateHoldRing(0);
+            
+            const areaTarget = document.getElementById("quiz-module-target-letter");
+            const pr = document.getElementById("quiz-module-progress-text");
+            if (areaTarget) areaTarget.textContent = quizTargetLetter;
             if (pr) pr.textContent = String(moduleExamIndex + 1);
             
             showFeedbackTray(true, "Correct Shape!", `Moving to letter: ${quizTargetLetter}`, () => {
@@ -963,9 +686,236 @@ function toggleSidebar() {
     if (nav) {
       nav.classList.add("sidebar-collapsed");
       const icon = document.getElementById("toggle-sidebar-icon");
-      if (icon) icon.textContent = "chevron_right";
+      if (icon) {
+        icon.textContent = "chevron_right";
+      }
     }
   }
+  // Load initially home screen contents 
+  showView("home");
 })();
 
-loadHome().then(() => { showView("learn"); loadLearnModules(); });
+// ---------------- FEEDBACK TRANSITION TRAY ----------------
+function showFeedbackTray(success, title, subtitle, onContinue) {
+  const tray = document.getElementById("feedback-tray");
+  if (!tray) return;
+
+  const tEl = document.getElementById("feedback-title");
+  const sEl = document.getElementById("feedback-text");
+  const iEl = document.getElementById("feedback-icon");
+  const btn = document.getElementById("feedback-btn-continue");
+
+  tEl.textContent = title || "Notification";
+  sEl.textContent = subtitle || "";
+  
+  if (success) {
+    tray.className = "feedback-tray feedback-success active";
+    iEl.textContent = "check_circle";
+  } else {
+    tray.className = "feedback-tray feedback-error active";
+    iEl.textContent = "error";
+  }
+
+  btn.onclick = () => {
+    hideFeedbackTray();
+    if (onContinue) onContinue();
+  };
+}
+
+function hideFeedbackTray() {
+  const tray = document.getElementById("feedback-tray");
+  if (tray) tray.className = "feedback-tray";
+}
+
+// ---------------- MARKING LESSON AS COMPLETED ----------------
+async function markLessonPassed(lessonId, vocab) {
+  if (currentClassroomId) {
+    try {
+      await FSL.api("/progress/complete-lesson", {
+        method: "POST",
+        body: {
+          classroom_id: currentClassroomId,
+          lesson_id: lessonId,
+          vocabulary: vocab || null
+        },
+      });
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+  
+  completedSet.add(lessonId);
+  triggerConfetti();
+
+  const idx = moduleLessonList.findIndex((l) => l.id === lessonId);
+  const next = idx >= 0 ? moduleLessonList[idx + 1] : null;
+
+  showFeedbackTray(true, "Lesson Passed!", "Fantastic! You've mastered this node progress path.", () => {
+    stopRecognition(true);
+    if (next) {
+      document.getElementById("module-quiz-area").innerHTML = `
+        <div class="glass-card rounded-2xl p-6 text-center shadow-lg border border-outline-variant/30 max-w-sm mx-auto">
+          <span class="material-symbols-outlined text-4xl text-primary animate-bounce">arrow_circle_right</span>
+          <h4 class="font-quicksand font-bold text-base text-primary mt-2">Next Node Unlocked</h4>
+          <p class="text-xs text-on-surface-variant mt-1 mb-4">You are ready to learn: <strong>${escapeHtml(next.title)}</strong></p>
+          <button class="btn-3d w-full bg-primary text-white font-semibold text-xs py-2.5 rounded-lg uppercase" onclick="openLesson('${next.id}')">
+            Continue Journey
+          </button>
+        </div>
+      `;
+      document.getElementById("module-quiz-area").scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // Re-initialize path update visual
+      openModule(currentModule);
+    }
+  });
+}
+
+// ---------------- MODULE LEVEL CHALLENGE EXAMS ----------------
+function startModuleExam(moduleId) {
+  const allDone = moduleLessonList.every((l) => completedSet.has(l.id));
+  if (!allDone) {
+    FSL.toast("Complete all sign nodes first!", "error");
+    return;
+  }
+  
+  hideFeedbackTray();
+
+  if (moduleId === "alphabet") {
+    quizMode = "module";
+    moduleExamIndex = 0;
+    quizTargetLetter = ALPHA_LETTERS[0];
+    holdStart = null;
+
+    const area = document.getElementById("module-quiz-area");
+    area.innerHTML = `
+      <div class="glass-card rounded-2xl p-6 text-center max-w-md mx-auto border border-outline-variant/30">
+        <h3 class="font-quicksand font-bold text-lg text-primary mb-1">Live Webcam Level Exam</h3>
+        <p class="text-xs text-on-surface-variant">Perform each sign shape cleanly. Complete all 25 handshapes to pass!</p>
+        
+        <div class="my-6">
+          <div class="text-xs font-bold text-text-muted">SIGN THIS LETTER (<span id="quiz-module-progress-text">1</span>/25)</div>
+          <div class="text-5xl font-black font-quicksand text-primary mt-1 animate-[bounce_1s_infinite]" id="quiz-module-target-letter">${quizTargetLetter}</div>
+        </div>
+
+        <button class="btn-3d w-full bg-primary text-white font-semibold text-xs py-3 rounded-xl uppercase tracking-wider mb-2" id="btn-start-exam-recognition">
+          Start Webcam Exam
+        </button>
+        <button class="btn-tactile w-full bg-surface-container-high border border-outline-variant text-on-surface font-semibold text-xs py-3 rounded-xl uppercase tracking-wider hidden" id="btn-stop-exam-recognition">
+          Pause webcam
+        </button>
+      </div>
+    `;
+
+    document.getElementById("btn-start-exam-recognition").onclick = () => {
+      startRecognition("module", quizTargetLetter, null);
+      document.getElementById("btn-start-exam-recognition").classList.add("hidden");
+      document.getElementById("btn-stop-exam-recognition").classList.remove("hidden");
+    };
+
+    document.getElementById("btn-stop-exam-recognition").onclick = () => {
+      stopRecognition(true);
+      document.getElementById("btn-start-exam-recognition").classList.remove("hidden");
+      document.getElementById("btn-stop-exam-recognition").classList.add("hidden");
+    };
+
+    area.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    // Generate text/image level quiz cards for regular vocabulary
+    generateVocabularyQuiz(moduleId);
+  }
+}
+
+async function generateVocabularyQuiz(moduleId) {
+  const area = document.getElementById("module-quiz-area");
+  area.innerHTML = `<p class="text-muted text-center py-6">Compiling quiz challenges ...</p>`;
+
+  // Get active module signs
+  const lessons = await FSL.api("/lessons?module=" + moduleId);
+  if (!lessons.length) {
+    area.innerHTML = `<p class="text-xs text-on-surface-variant text-center">No questions available.</p>`;
+    return;
+  }
+
+  // Create multi-choice question list structure
+  const questions = lessons.map((l, idx) => {
+    const wrong = lessons.filter(x => x.id !== l.id).map(x => x.vocab);
+    // Shuffle wrong items
+    const distractorPool = [...new Set(wrong)].sort(() => 0.5 - Math.random()).slice(0, 3);
+    const options = [l.vocab, ...distractorPool].sort(() => 0.5 - Math.random());
+    
+    return {
+      lesson_id: l.id,
+      correct: l.vocab,
+      options,
+      video: l.video_url
+    };
+  });
+
+  let curIdx = 0;
+  const renderQuestion = (st) => {
+    if (!st) {
+      // Completed entire exam sequence successfully
+      triggerConfetti();
+      showFeedbackTray(true, "Vocabulary Level Complete!", "Splendid! You passed all visual vocabulary questions.");
+      area.innerHTML = "";
+      return;
+    }
+
+    area.innerHTML = `
+      <div class="glass-card rounded-2xl p-6 max-w-sm mx-auto border border-outline-variant/30">
+        <span class="inline-block px-2 py-0.5 bg-surface-container text-primary text-[10px] font-bold uppercase rounded border border-outline-variant/30">Q ${st.idx + 1}/${questions.length}</span>
+        
+        <div class="flex flex-col justify-center items-center aspect-video max-h-[160px] bg-slate-900 rounded-xl" style="margin:1.25rem 0;">
+          ${st.video 
+            ? `<video class="w-full h-full object-cover rounded-xl" autoplay loop muted><source src="${escapeHtml(st.video)}" type="video/mp4" /></video>`
+            : `<div class="placeholder flex flex-col items-center"><span class="material-symbols-outlined text-white text-3xl mb-1">movie</span><div class="font-quicksand font-bold text-white text-xs">Sign Demo</div></div>`
+          }
+        </div>
+
+        <h4 class="font-quicksand font-bold text-sm text-on-surface mb-3">Which word matches this sign?</h4>
+        
+        <div class="space-y-2" id="quiz-options-box">
+          ${st.options.map(o => `
+            <div class="option hover:bg-surface-container flex items-center justify-between border border-outline-variant p-4 rounded-xl cursor-pointer text-xs font-bold select-none transition-all active:scale-[0.98]" data-val="${escapeHtml(o)}">
+              <span>${escapeHtml(o)}</span>
+              <span class="material-symbols-outlined text-outline-variant text-sm">radio_button_unchecked</span>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+
+    document.querySelectorAll("#quiz-options-box .option").forEach(el => {
+      el.onclick = () => {
+        const val = el.dataset.val;
+        if (val === st.correct) {
+          el.className = "option bg-green-500/10 border-green-500 text-green-700 flex items-center justify-between border p-4 rounded-xl cursor-pointer text-xs font-bold select-none";
+          el.querySelector("span:last-child").innerHTML = "check_circle";
+          el.querySelector("span:last-child").className = "material-symbols-outlined text-green-600 text-sm";
+          updateSigny("happy");
+          
+          showFeedbackTray(true, "Correct Sign!", `"${st.correct}" is correct!`, () => {
+            curIdx++;
+            renderQuestion(questions[curIdx] ? { ...questions[curIdx], idx: curIdx } : null);
+          });
+        } else {
+          el.className = "option bg-red-500/10 border-red-500 text-red-700 flex items-center justify-between border p-4 rounded-xl cursor-pointer text-xs font-bold select-none";
+          el.querySelector("span:last-child").innerHTML = "cancel";
+          el.querySelector("span:last-child").className = "material-symbols-outlined text-red-600 text-sm";
+          updateSigny("sad");
+          
+          showFeedbackTray(false, "Incorrect", `That is not the correct sign. Try again!`, () => {
+            // Allow re-selecting
+            el.className = "option hover:bg-surface-container flex items-center justify-between border border-outline-variant p-4 rounded-xl cursor-pointer text-xs font-bold select-none transition-all active:scale-[0.98]";
+            el.querySelector("span:last-child").innerHTML = "radio_button_unchecked";
+            el.querySelector("span:last-child").className = "material-symbols-outlined text-outline-variant text-sm";
+          });
+        }
+      };
+    });
+  };
+
+  renderQuestion({ ...questions[0], idx: 0 });
+  area.scrollIntoView({ behavior: "smooth", block: "start" });
+}
