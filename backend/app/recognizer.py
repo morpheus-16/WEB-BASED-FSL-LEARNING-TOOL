@@ -4,8 +4,6 @@ Expects normalized 63-dim MediaPipe landmarks (same as training).
 """
 
 from pathlib import Path
-import numpy as np
-import joblib
 from typing import Optional, Dict, Any
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
@@ -19,6 +17,10 @@ def _load_models():
     global _model, _encoder, _loaded
     if _loaded:
         return
+    
+    # Lazy import to save startup memory
+    import joblib
+
     model_path = MODELS_DIR / "random_forest_model.pkl"
     enc_path = MODELS_DIR / "random_forest_encoder.pkl"
     if not model_path.exists() or not enc_path.exists():
@@ -34,12 +36,14 @@ def _load_models():
     _loaded = True
 
 
-def normalize_landmarks(landmarks_flat: np.ndarray) -> np.ndarray:
+def normalize_landmarks(landmarks_flat) -> Any:
     """
     Same normalization used during training:
     - re-center on wrist (lm 0)
     - scale by wrist -> middle MCP (lm 9)
     """
+    import numpy as np
+
     pts = np.asarray(landmarks_flat, dtype=np.float32).reshape(21, 3).copy()
     wrist = pts[0].copy()
     pts -= wrist
@@ -55,6 +59,8 @@ def predict_letter(landmarks: list) -> Dict[str, Any]:
     landmarks: list of 63 floats (or nested) from MediaPipe.
     Returns { letter, confidence, all_probs (top 5) }
     """
+    import numpy as np
+
     _load_models()
     if _model is None or _encoder is None:
         return {
@@ -103,3 +109,4 @@ def predict_letter(landmarks: list) -> Dict[str, Any]:
             "message": str(e),
             "top": [],
         }
+

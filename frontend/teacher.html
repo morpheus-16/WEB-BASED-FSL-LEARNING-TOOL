@@ -1,567 +1,726 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Teacher Dashboard · FSL Learn</title>
-  <link rel="stylesheet" href="/css/styles.css" />
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>SignWise | Teacher Dashboard</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&amp;family=Inter:wght@100..900&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
   <link rel="icon" href="/assets/logo.svg" />
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "error": "#ba1a1a",
+            "surface-container": "#e5eeff",
+            "tertiary-fixed": "#ffddb8",
+            "outline-variant": "#c3c6d7",
+            "inverse-primary": "#b4c5ff",
+            "surface-container-high": "#dce9ff",
+            "on-secondary-container": "#006f66",
+            "tertiary-container": "#996100",
+            "surface-dim": "#cbdbf5",
+            "on-tertiary-fixed-variant": "#653e00",
+            "primary": "#004ac6",
+            "on-tertiary-fixed": "#2a1700",
+            "on-secondary-fixed": "#00201d",
+            "on-error": "#ffffff",
+            "primary-container": "#2563eb",
+            "on-error-container": "#93000a",
+            "outline": "#737686",
+            "surface-tint": "#0053db",
+            "tertiary-fixed-dim": "#ffb95f",
+            "secondary": "#006a61",
+            "on-background": "#0b1c30",
+            "primary-fixed-dim": "#b4c5ff",
+            "on-secondary-fixed-variant": "#005049",
+            "surface-variant": "#d3e4fe",
+            "background": "#f8f9ff",
+            "on-primary": "#ffffff",
+            "inverse-on-surface": "#eaf1ff",
+            "error-container": "#ffdad6",
+            "primary-fixed": "#dbe1ff",
+            "surface-container-highest": "#d3e4fe",
+            "surface-bright": "#f8f9ff",
+            "on-surface": "#0b1c30",
+            "on-tertiary-container": "#ffeedd",
+            "secondary-fixed": "#89f5e7",
+            "surface-container-low": "#eff4ff",
+            "on-tertiary": "#ffffff",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-primary-fixed": "#00174b",
+            "tertiary": "#784b00",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary": "#ffffff",
+            "on-primary-container": "#eeefff",
+            "surface": "#f8f9ff",
+            "inverse-surface": "#213145",
+            "on-surface-variant": "#434655",
+            "secondary-container": "#86f2e4",
+            "on-primary-fixed-variant": "#003ea8"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1.5rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "base": "8px",
+            "sm": "12px",
+            "md": "24px",
+            "xs": "4px",
+            "margin-desktop": "48px",
+            "margin-mobile": "16px",
+            "xl": "64px",
+            "gutter": "24px",
+            "lg": "40px"
+          },
+          "fontFamily": {
+            "headline-xl": ["Quicksand"],
+            "label-sm": ["Inter"],
+            "label-md": ["Inter"],
+            "headline-lg": ["Quicksand"],
+            "body-md": ["Inter"],
+            "headline-md": ["Quicksand"],
+            "headline-lg-mobile": ["Quicksand"],
+            "body-lg": ["Inter"]
+          },
+          "fontSize": {
+            "headline-xl": ["40px", { "lineHeight": "48px", "fontWeight": "700" }],
+            "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+            "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+  <link rel="stylesheet" href="/css/teacher.css" />
 </head>
-<body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="/teacher.html" class="logo">
-        <div class="logo-icon"><img src="/assets/logo.svg" alt="FSL Learn" width="48" height="48" /></div>
-        <span>FSL <span class="brand-accent">Learn</span></span>
+
+<body class="bg-background text-on-surface">
+
+  <!-- TopNavBar -->
+  <header
+    class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16 shadow-sm bg-surface dark:bg-inverse-surface border-b border-outline-variant/40">
+    <div class="flex items-center gap-4">
+      <a href="/teacher.html"
+        class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-2xl font-bold">sign_language</span> SignWise
       </a>
-      <div id="navbar-right" class="flex gap-1" style="align-items:center"></div>
+    </div>
+    <div class="flex items-center gap-6">
+      <div class="hidden md:flex items-center gap-6">
+        <a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors"
+          href="/teacher.html">Resources</a>
+        <a class="text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors"
+          href="/teacher.html">Support</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="p-2 rounded-full hover:bg-surface-container-low transition-colors"
+          onclick="FSL.toast('No new notifications','success')">
+          <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+        </button>
+        <div
+          class="w-10 h-10 rounded-full bg-primary-fixed overflow-hidden border-2 border-outline-variant flex items-center justify-center font-bold text-primary">
+          <span class="material-symbols-outlined text-primary text-xl">account_circle</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- SideNavBar -->
+  <nav
+    class="hidden lg:flex flex-col h-screen fixed left-0 top-0 border-r border-outline-variant pt-20 pb-8 bg-surface-container-low w-64 sidebar-nav">
+    <div class="px-4 mb-6 flex items-center justify-between gap-1">
+      <div class="sidebar-brand transition-all overflow-hidden">
+        <h2 class="font-headline-md text-headline-md font-bold text-primary whitespace-nowrap">SignWise</h2>
+        <p class="text-on-surface-variant text-label-sm whitespace-nowrap">Learning Portal</p>
+      </div>
+      <button id="btn-toggle-sidebar"
+        class="p-1.5 rounded-lg hover:bg-surface-variant text-on-surface-variant transition-colors flex items-center justify-center shrink-0"
+        onclick="toggleSidebar()">
+        <span class="material-symbols-outlined text-xl" id="toggle-sidebar-icon">chevron_left</span>
+      </button>
+    </div>
+    <div class="flex-1 flex flex-col gap-1">
+      <button
+        class="sidebar-nav-item flex items-center gap-3 bg-primary-container text-on-primary-container rounded-xl px-4 py-3 mx-2 transition-all active"
+        data-view="overview" onclick="showView('overview', this)">
+        <span class="material-symbols-outlined filled-icon">dashboard</span>
+        <span class="font-label-md text-label-md sidebar-text">Dashboard</span>
+      </button>
+      <button
+        class="sidebar-nav-item flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-xl transition-all"
+        data-view="students" onclick="showView('students', this)">
+        <span class="material-symbols-outlined">school</span>
+        <span class="font-label-md text-label-md sidebar-text">Classrooms</span>
+      </button>
+      <button
+        class="sidebar-nav-item flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-xl transition-all"
+        data-view="content" onclick="showView('content', this)">
+        <span class="material-symbols-outlined">local_library</span>
+        <span class="font-label-md text-label-md sidebar-text">Library</span>
+      </button>
+      <button
+        class="sidebar-nav-item flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-xl transition-all"
+        data-view="recognize" onclick="showView('recognize', this)">
+        <span class="material-symbols-outlined">videocam</span>
+        <span class="font-label-md text-label-md sidebar-text">Live Demo</span>
+      </button>
+      <button
+        class="sidebar-nav-item flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-xl transition-all"
+        data-view="profile" onclick="showView('profile', this)">
+        <span class="material-symbols-outlined">account_circle</span>
+        <span class="font-label-md text-label-md sidebar-text">Profile</span>
+      </button>
+    </div>
+    <div class="px-4">
+      <button
+        class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-variant text-on-surface-variant font-label-md hover:bg-outline-variant transition-colors sidebar-logout-btn"
+        onclick="logout()">
+        <span class="material-symbols-outlined">logout</span> <span class="sidebar-text">Logout</span>
+      </button>
     </div>
   </nav>
 
-  <div class="dashboard">
-    <aside class="sidebar">
-      <ul class="sidebar-nav">
-        <li><a href="#" class="active" data-view="content" onclick="showView('content', this)"><span class="icon">📚</span> FSL Lessons</a></li>
-        <li><a href="#" data-view="classrooms" onclick="showView('classrooms', this)"><span class="icon">🏫</span> Classrooms</a></li>
-        <li><a href="#" data-view="profile" onclick="showView('profile', this)"><span class="icon">👤</span> Profile</a></li>
-      </ul>
-      <div class="sidebar-tip">
-        <strong>System Flow</strong>
-        Browse FSL Lessons · Demo Alphabet Recognition · Manage Classrooms & Students.
-      </div>
-    </aside>
+  <!-- Main Content Canvas -->
+  <main class="lg:ml-64 pt-24 px-margin-mobile md:px-margin-desktop pb-24">
 
-    <main class="main-content">
-      <div id="view-overview" class="hidden">
-        <div class="page-header">
-          <div>
-            <h1>Welcome, <span id="teacher-name">Teacher</span></h1>
-            <p>Track student vocabulary progress and manage your FSL classrooms.</p>
-          </div>
-          <button class="btn" onclick="showView('classrooms'); openCreateModal()">+ New Classroom</button>
+    <!-- VIEW OVERVIEW (DASHBOARD) -->
+    <div id="view-overview" class="space-y-8">
+      <!-- Header Section -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="font-headline-lg text-headline-lg text-on-surface">Teacher Dashboard Overview</h1>
+          <p class="text-body-md text-on-surface-variant">Welcome, Teacher <span id="teacher-name"
+              class="font-semibold text-primary">User</span>! Manage student directories and sign activities.</p>
         </div>
-        <div class="stats-grid">
-          <div class="stat-card"><div class="label">Classrooms</div><div class="value" id="stat-classrooms">—</div></div>
-          <div class="stat-card"><div class="label">Total Students</div><div class="value" id="stat-students">—</div></div>
-          <div class="stat-card"><div class="label">Avg Progress</div><div class="value" id="stat-progress">—</div></div>
-          <div class="stat-card"><div class="label">Content Modules</div><div class="value">3</div></div>
-        </div>
-        <h2 style="margin-bottom:1rem;">Your Classrooms</h2>
-        <div class="classroom-grid" id="overview-classrooms"></div>
+        <button
+          class="btn-tactile flex items-center justify-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-full font-label-md text-white font-bold"
+          onclick="openCreateModal()">
+          <span class="material-symbols-outlined">add</span> Create New Classroom
+        </button>
       </div>
 
-      <div id="view-classrooms" class="hidden">
-        <div class="page-header">
-          <div><h1>Classrooms</h1><p>Create classrooms, add students, and track Alphabet / Basic / Intermediate progress.</p></div>
-          <div class="flex gap-1">
-            <button class="btn btn-ghost" type="button" onclick="openStudentsPanel()">Student progress</button>
-            <button class="btn" onclick="openCreateModal()">+ Create Classroom</button>
+      <!-- Bento Grid: Classrooms -->
+      <div>
+        <h2 class="font-headline-md text-headline-md mb-4 text-on-surface">My Classrooms</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-gutter" id="overview-classrooms"></div>
+      </div>
+
+      <!-- Quick Roster Table -->
+      <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden shadow-sm">
+        <div class="px-md py-4 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+          <h2 class="font-headline-md text-headline-md">Quick Roster</h2>
+          <div class="flex items-center gap-2 bg-surface p-1 rounded-lg border border-outline-variant">
+            <select
+              class="px-3 py-1 bg-surface border border-outline-variant rounded-md text-xs font-semibold text-on-surface-variant"
+              id="classroom-select" onchange="loadStudents()"></select>
           </div>
         </div>
-        <div class="classroom-grid" id="classrooms-list"></div>
-      </div>
-
-      <div id="view-students" class="hidden">
-        <div class="page-header">
-          <div><h1>Students & Progress</h1><p>Create student accounts and track progress. Students cannot self-register.</p></div>
-          <select class="form-control" id="classroom-select" style="width:auto; min-width:200px" onchange="loadStudents()"></select>
-            <button class="btn" type="button" onclick="openAddStudentModal()">+ Add Student</button>
-        </div>
-        <div class="table-wrap">
-          <table>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[650px]">
             <thead>
-              <tr><th>Student</th><th colspan="4">Progress (Alphabet · Basic · Intermediate)</th><th>Last Activity</th></tr>
+              <tr
+                class="bg-surface-container-low text-on-surface-variant font-label-md uppercase text-[10px] tracking-widest border-b border-outline-variant">
+                <th class="px-md py-4 font-semibold">Student Name</th>
+                <th class="px-md py-4 font-semibold">Username</th>
+                <th class="px-md py-4 font-semibold" colspan="2">Current Progress</th>
+                <th class="px-md py-4 font-semibold">Last Active</th>
+                <th class="px-md py-4 font-semibold">Actions</th>
+              </tr>
             </thead>
-            <tbody id="students-tbody">
-              <tr><td colspan="6" class="text-center text-muted">Select a classroom</td></tr>
+            <tbody class="divide-y divide-outline-variant" id="students-tbody">
+              <tr>
+                <td colspan="5" class="text-center py-8 text-on-surface-variant font-medium">Select a classroom from the
+                  top-right filter to load rosters.</td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <div id="view-content">
-        <div class="page-header">
-          <div><h1>FSL Lessons</h1><p>Browse Alphabet, Basic, and Intermediate lessons (pre-defined content).</p></div>
+      <!-- Sign Library Preview Section -->
+      <section>
+        <div class="flex items-center justify-between mb-md">
+          <h2 class="font-headline-md text-headline-md">Library Preview</h2>
+          <button class="text-primary font-label-md flex items-center gap-1 hover:underline"
+            onclick="showView('content')">
+            Explore Full Library <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+          </button>
         </div>
-        <div class="modules-grid" id="content-modules"></div>
-        <div id="content-lessons" class="mt-3"></div>
-      </div>
-
-      <div id="view-recognize" class="hidden">
-        <div class="page-header">
-          <div>
-            <h1>Alphabet Recognition</h1>
-            <p>Open webcam, perform FSL alphabet signs, view recognized letter and accuracy. For classroom demonstration.</p>
-          </div>
-          <div class="flex gap-1">
-            <button class="btn" id="btn-start-cam" onclick="startRecognition()">Start Camera</button>
-            <button class="btn btn-ghost" id="btn-stop-cam" onclick="stopRecognition()" disabled>Stop</button>
-          </div>
-        </div>
-        <div class="recog-layout">
-          <div>
-            <div class="camera-box" id="camera-box">
-              <video id="input-video" playsinline></video>
-              <canvas id="output-canvas"></canvas>
-              <div id="cam-placeholder" style="position:absolute;inset:0;display:grid;place-items:center;color:#8aa8c0;text-align:center;padding:1.5rem;background:#0f1c2a;">
-                <div>
-                  <div style="font-size:2.5rem;margin-bottom:0.5rem">📷</div>
-                  <p>Click <strong>Start Camera</strong> to begin live recognition</p>
-                  <p style="font-size:0.85rem;opacity:0.7;margin-top:0.4rem">Allow camera access when prompted</p>
-                </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+          <!-- Library Item 1 -->
+          <div class="group cursor-pointer" onclick="showView('content')">
+            <div
+              class="relative aspect-video rounded-xl overflow-hidden bg-surface-container mb-3 border border-outline-variant/40">
+              <div
+                class="w-full h-full bg-primary-fixed flex items-center justify-center text-xs font-bold text-primary">
+                ABC</div>
+              <div
+                class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span class="material-symbols-outlined text-white text-4xl">play_circle</span>
               </div>
             </div>
-            <p class="text-muted mt-1" style="font-size:0.85rem;">Tip: Hold your hand steady, well lit, and fill a good portion of the frame. J and Z are motion signs and may be less accurate.</p>
+            <div class="flex items-center justify-between">
+              <h4 class="font-body-md font-bold">FSL Alphabet</h4>
+              <span
+                class="px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded-md text-[10px] font-bold uppercase">Beginner</span>
+            </div>
           </div>
-          <div class="card recog-result">
-            <div class="recog-status" id="recog-status">Ready</div>
-            <div class="recog-letter" id="recog-letter">—</div>
-            <div class="recog-conf" id="recog-conf">Confidence: —</div>
-            <div class="recog-bar"><div class="fill" id="recog-bar-fill" style="width:0%"></div></div>
-            <div class="recog-top" id="recog-top"></div>
+          <!-- Library Item 2 -->
+          <div class="group cursor-pointer" onclick="showView('content')">
+            <div
+              class="relative aspect-video rounded-xl overflow-hidden bg-surface-container mb-3 border border-outline-variant/40">
+              <div
+                class="w-full h-full bg-secondary-fixed flex items-center justify-center text-xs font-bold text-secondary">
+                HELLO</div>
+              <div
+                class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span class="material-symbols-outlined text-white text-4xl">play_circle</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <h4 class="font-body-md font-bold">Greetings</h4>
+              <span
+                class="px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded-md text-[10px] font-bold uppercase">Beginner</span>
+            </div>
           </div>
+          <!-- Library Item 3 -->
+          <div class="group cursor-pointer" onclick="showView('content')">
+            <div
+              class="relative aspect-video rounded-xl overflow-hidden bg-surface-container mb-3 border border-outline-variant/40">
+              <div
+                class="w-full h-full bg-tertiary-fixed flex items-center justify-center text-xs font-bold text-tertiary-container">
+                FAMILY</div>
+              <div
+                class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span class="material-symbols-outlined text-white text-4xl">play_circle</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <h4 class="font-body-md font-bold">Family Signs</h4>
+              <span
+                class="px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded-md text-[10px] font-bold uppercase">Beginner</span>
+            </div>
+          </div>
+          <!-- Library Item 4 -->
+          <div class="group cursor-pointer" onclick="showView('content')">
+            <div
+              class="relative aspect-video rounded-xl overflow-hidden bg-surface-container mb-3 border border-outline-variant/40">
+              <div
+                class="w-full h-full bg-surface-container flex items-center justify-center text-xs font-bold text-on-surface-variant">
+                TALK</div>
+              <div
+                class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span class="material-symbols-outlined text-white text-4xl">play_circle</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <h4 class="font-body-md font-bold">Expressions</h4>
+              <span
+                class="px-2 py-0.5 bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-md text-[10px] font-bold uppercase">Intermediate</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- VIEW CLASSROOMS (ROSTER DIRECTORY VIEW) -->
+    <div id="view-students" class="hidden space-y-6">
+      <div
+        class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/30 pb-4">
+        <div>
+          <h1 class="font-headline-lg text-headline-lg text-on-surface">Classrooms & Roster</h1>
+          <p class="text-body-md text-on-surface-variant">Configure classroom folders and add student logins.</p>
+        </div>
+        <button
+          class="btn-tactile flex items-center justify-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-full font-label-md text-white font-bold animate-[fade-in_0.5s]"
+          type="button" onclick="openAddStudentModal()">
+          <span class="material-symbols-outlined">person_add</span> Add Student Account
+        </button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="classrooms-list"></div>
+
+      <!-- Dedicated Classroom Roster Section -->
+      <div id="classroom-roster-section" class="hidden bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden shadow-sm mt-8 animate-[fade-in_0.3s]">
+        <div class="px-md py-4 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+          <div>
+            <h2 class="font-headline-md text-headline-md text-primary" id="roster-classroom-title">Classroom Roster</h2>
+            <p class="text-xs text-on-surface-variant mt-1" id="roster-classroom-code">Code: ---</p>
+          </div>
+          <button
+            class="btn-tactile flex items-center justify-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-xl font-label-md text-white font-bold"
+            onclick="openAddStudentModal()">
+            <span class="material-symbols-outlined text-sm">person_add</span> Add Student
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[650px]">
+            <thead>
+              <tr class="bg-surface-container-low text-on-surface-variant font-label-md uppercase text-[10px] tracking-widest border-b border-outline-variant">
+                <th class="px-md py-4 font-semibold">Student Name</th>
+                <th class="px-md py-4 font-semibold">Username</th>
+                <th class="px-md py-4 font-semibold" colspan="2">Current Progress</th>
+                <th class="px-md py-4 font-semibold">Last Active</th>
+                <th class="px-md py-4 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant" id="classroom-students-tbody">
+              <tr>
+                <td colspan="5" class="text-center py-8 text-on-surface-variant font-medium">Select a classroom to load roster.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-    
-      <div id="view-profile" class="hidden">
-        <div class="page-header">
-          <div><h1>Profile</h1><p>View and update your account information.</p></div>
+    </div>
+
+
+    <!-- VIEW LIBRARY (FSL LESSON INDEX) -->
+    <div id="view-content" class="hidden space-y-6">
+      <div class="border-b border-outline-variant/30 pb-4">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface">Sign Library</h1>
+        <p class="text-body-md text-on-surface-variant">View curriculum sign descriptions and difficulties.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="content-modules"></div>
+      <div id="content-lessons" class="mt-8 space-y-4"></div>
+    </div>
+
+    <!-- VIEW LIVE SIGN RECOGNITION (TEACHER DEMO) -->
+    <div id="view-recognize" class="hidden space-y-6">
+      <div
+        class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/30 pb-4">
+        <div>
+          <h1 class="font-headline-lg text-headline-lg text-on-surface">Live Fingerspelling Demo</h1>
+          <p class="text-body-md text-on-surface-variant">Broadcast sign shape predictions to the classroom using hand
+            tracking.</p>
         </div>
-        <div class="card" style="padding:1.5rem;max-width:480px">
-          <div class="form-group"><label>Full Name</label><input class="form-control" id="prof-name" /></div>
-          <div class="form-group"><label>Username</label><input class="form-control" id="prof-user" disabled /></div>
-          <div class="form-group"><label>Email</label><input class="form-control" id="prof-email" /></div>
-          <div class="form-group"><label>New Password (optional)</label><input type="password" class="form-control" id="prof-pass" placeholder="Leave blank to keep" /></div>
-          <button class="btn" onclick="saveProfile()">Save Changes</button>
+        <div class="flex gap-2">
+          <button
+            class="btn-tactile flex items-center justify-center gap-1.5 px-4 py-2 bg-primary text-on-primary rounded-xl font-label-md text-white font-bold"
+            id="btn-start-cam" onclick="startRecognition()">
+            <span class="material-symbols-outlined text-sm">videocam</span> Start Camera
+          </button>
+          <button
+            class="px-4 py-2 border border-outline rounded-xl text-xs font-bold bg-surface-container hover:bg-surface-container-high transition-colors"
+            id="btn-stop-cam" onclick="stopRecognition()" disabled>Stop</button>
         </div>
       </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="lg:col-span-7 space-y-3">
+          <div class="camera-box" id="camera-box">
+            <video id="input-video" playsinline></video>
+            <canvas id="output-canvas"></canvas>
+            <div id="cam-placeholder"
+              class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-[#0f1c2a] text-outline-variant/80 z-20">
+              <span class="material-symbols-outlined text-5xl mb-2">videocam</span>
+              <p class="font-quicksand font-bold text-base text-white">Click "Start Camera" to initialize the video feed
+              </p>
+              <p class="text-xs text-outline-variant mt-1">Allow camera browser permission when prompted.</p>
+            </div>
+          </div>
+          <p
+            class="text-xs text-on-surface-variant font-medium leading-relaxed bg-surface-container/30 p-3 rounded-xl border border-outline-variant/30">
+            <strong>Demo tip:</strong> Keep hand shape steady under clear lighting. Try showing signs A-Z.
+          </p>
+        </div>
+        <div
+          class="lg:col-span-5 bg-surface-container-lowest border border-outline-variant p-md rounded-2xl flex flex-col items-center justify-center min-h-[300px] text-center shadow-sm">
+          <div
+            class="recog-status mb-4 inline-flex items-center gap-1.5 px-3 py-1 bg-surface-container border border-outline-variant text-[11px] font-bold text-on-surface-variant uppercase rounded-full"
+            id="recog-status">Ready</div>
+          <div class="recog-letter font-quicksand font-bold text-7xl text-primary drop-shadow-sm" id="recog-letter">—
+          </div>
+          <div class="recog-conf text-sm font-bold text-on-surface-variant mt-3" id="recog-conf">Confidence: —</div>
+          <div class="recog-bar w-full max-w-[200px] h-2.5 bg-outline-variant rounded-full overflow-hidden mt-3">
+            <div class="h-full bg-primary transition-all duration-150" id="recog-bar-fill" style="width:0%"></div>
+          </div>
+          <div class="recog-top w-full mt-6" id="recog-top"></div>
+        </div>
+      </div>
+    </div>
+    <!-- VIEW PROFILE (SETTINGS) -->
+    <div id="view-profile" class="hidden space-y-6 max-w-xl mx-auto w-full">
+      <div class="border-b border-outline-variant/30 pb-4">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface text-center">Profile Settings</h1>
+        <p class="text-body-md text-on-surface-variant text-center">Update your administrator details and password
+          credentials.</p>
+      </div>
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 space-y-4 shadow-sm w-full">
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface" for="prof-name">Full Name</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            id="prof-name" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface" for="prof-user">Username</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm opacity-60"
+            id="prof-user" disabled />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface" for="prof-email">Email Address</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            id="prof-email" type="email" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface" for="prof-pass">New Password (optional)</label>
+          <input type="password"
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            id="prof-pass" placeholder="Leave blank to keep current password" />
+        </div>
+        <button
+          class="w-full h-11 bg-primary text-white font-semibold text-xs rounded-lg btn-tactile uppercase tracking-wider flex items-center justify-center mt-6"
+          onclick="saveProfile()">
+          Save profile settings
+        </button>
+      </div>
+    </div>
 
-    </main>
-  </div>
+  </main>
 
+  <!-- Mobile Bottom Nav Bar (Bottom) -->
+  <nav
+    class="lg:hidden fixed bottom-0 left-0 w-full h-16 bg-surface-container-highest border-t border-outline-variant flex items-center justify-around z-50">
+    <button class="bottom-nav-item flex flex-col items-center gap-1 text-primary active" data-view="overview"
+      onclick="showView('overview', this)">
+      <span class="material-symbols-outlined filled-icon">dashboard</span>
+      <span class="text-[10px] font-bold">Dashboard</span>
+    </button>
+    <button class="bottom-nav-item flex flex-col items-center gap-1 text-on-surface-variant" data-view="students"
+      onclick="showView('students', this)">
+      <span class="material-symbols-outlined">school</span>
+      <span class="text-[10px] font-bold">Classes</span>
+    </button>
+    <button class="bottom-nav-item flex flex-col items-center gap-1 text-on-surface-variant" data-view="content"
+      onclick="showView('content', this)">
+      <span class="material-symbols-outlined">local_library</span>
+      <span class="text-[10px] font-bold">Library</span>
+    </button>
+    <button class="bottom-nav-item flex flex-col items-center gap-1 text-on-surface-variant" data-view="profile"
+      onclick="showView('profile', this)">
+      <span class="material-symbols-outlined">account_circle</span>
+      <span class="text-[10px] font-bold">Profile</span>
+    </button>
+  </nav>
+
+  <!-- CREATE CLASSROOM MODAL -->
   <div id="modal-create" class="modal-overlay hidden" style="display:none;">
     <div class="modal-card">
-      <h2 style="margin-bottom:1.15rem;">Create Classroom</h2>
-      <form onsubmit="createClassroom(event)">
-        <div class="form-group">
-          <label>Classroom Name</label>
-          <input class="form-control" name="name" required placeholder="e.g. Grade 4 - Faith" />
+      <h2 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-1.5"><span
+          class="material-symbols-outlined text-2xl">add_box</span> Create Classroom</h2>
+      <form onsubmit="createClassroom(event)" class="space-y-4">
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface">Classroom Name</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            name="name" required placeholder="e.g. Grade 3 - Hope" />
         </div>
-        <div class="form-group">
-          <label>Description (optional)</label>
-          <input class="form-control" name="description" placeholder="FSL for beginners" />
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface">Description (optional)</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            name="description" placeholder="FSL Vocabulary for beginners" />
         </div>
-        <div class="flex gap-1" style="justify-content:flex-end">
-          <button type="button" class="btn btn-ghost" onclick="closeCreateModal()">Cancel</button>
-          <button type="submit" class="btn">Create & Get Code</button>
+        <div class="flex gap-2 justify-end mt-6">
+          <button type="button"
+            class="px-4 py-2 border border-outline rounded-lg text-xs font-bold hover:bg-surface-container transition-colors"
+            onclick="closeCreateModal()">Cancel</button>
+          <button type="submit"
+            class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary-container transition-colors shadow-sm shadow-primary/20">Create</button>
         </div>
       </form>
     </div>
   </div>
 
-  <script src="/js/app.js"></script>
-  <script>
-    const user = FSL.requireAuth("teacher");
-    if (!user) throw new Error("redirect");
-    FSL.renderNavbar(user);
-    document.getElementById("teacher-name").textContent = user.full_name?.split(" ")[0] || user.username;
-
-    let classrooms = [];
-    let selectedClassroomId = null;
-    let hands = null;
-    let camera = null;
-    let recognizing = false;
-    let lastSend = 0;
-    const SEND_INTERVAL_MS = 350;
-
-    async function loadOverview() {
-      classrooms = await FSL.api("/classrooms/mine");
-      document.getElementById("stat-classrooms").textContent = classrooms.length;
-      let totalStudents = 0, totalProgress = 0, progressCount = 0;
-      const grid = document.getElementById("overview-classrooms");
-      grid.innerHTML = "";
-      if (!classrooms.length) {
-        grid.innerHTML = `<div class="card" style="padding:2rem;text-align:center;grid-column:1/-1">
-          <p class="text-muted">No classrooms yet. Create one to get a join code for students.</p>
-          <button class="btn mt-2" onclick="openCreateModal()">Create your first classroom</button>
-        </div>`;
-      }
-      for (const c of classrooms) {
-        const students = await FSL.api(`/classrooms/${c.id}/students`).catch(() => []);
-        totalStudents += students.length;
-        students.forEach((s) => {
-          totalProgress += s.progress?.progress_percent || 0;
-          progressCount++;
-        });
-        const card = document.createElement("div");
-        card.className = "classroom-card";
-        card.innerHTML = `
-          <h3>${escapeHtml(c.name)}</h3>
-          <p>${escapeHtml(c.description || "No description")}</p>
-          <div class="code-pill" title="Share this code">🔑 ${c.code}</div>
-          <div class="flex gap-1 mt-2" style="justify-content:space-between;align-items:center">
-            <span class="text-muted" style="font-size:0.85rem">${students.length} student${students.length !== 1 ? "s" : ""}</span>
-            <button class="btn btn-sm btn-secondary" onclick="viewClassroom(${c.id})">View Progress</button>
-          </div>`;
-        grid.appendChild(card);
-      }
-      document.getElementById("stat-students").textContent = totalStudents;
-      document.getElementById("stat-progress").textContent = progressCount ? Math.round(totalProgress / progressCount) + "%" : "0%";
-      document.getElementById("classrooms-list").innerHTML = grid.innerHTML;
-      const sel = document.getElementById("classroom-select");
-      sel.innerHTML = `<option value="">Select classroom…</option>` + classrooms.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
-      if (selectedClassroomId) sel.value = selectedClassroomId;
-    }
-
-    function viewClassroom(id) {
-      selectedClassroomId = id;
-      document.getElementById("classroom-select").value = id;
-      showView("students");
-      loadStudents();
-    }
-
-    async function loadStudents() {
-      const id = document.getElementById("classroom-select").value;
-      const tbody = document.getElementById("students-tbody");
-      if (!id) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Select a classroom</td></tr>`;
-        return;
-      }
-      selectedClassroomId = +id;
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center"><div class="spinner" style="margin:1rem auto"></div></td></tr>`;
-      try {
-        const students = await FSL.api(`/classrooms/${id}/students`);
-        if (!students.length) {
-          tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No students have joined yet. Share the classroom code!</td></tr>`;
-          return;
-        }
-        // Build per-module progress for each student
-        let modules = [];
-        try { modules = await FSL.api("/modules"); } catch (_) {}
-        const lessonMap = {};
-        for (const m of modules) {
-          try {
-            const ls = await FSL.api("/lessons?module=" + m.id);
-            lessonMap[m.id] = { title: m.title, ids: ls.map((l) => l.id) };
-          } catch (_) {
-            lessonMap[m.id] = { title: m.id, ids: [] };
-          }
-        }
-        tbody.innerHTML = students.map((s) => {
-          const p = s.progress || {};
-          const completed = new Set(p.completed_lessons || []);
-          const bars = Object.keys(lessonMap).map((mid) => {
-            const info = lessonMap[mid];
-            const done = info.ids.filter((id) => completed.has(id)).length;
-            const pct = info.ids.length ? Math.round((done / info.ids.length) * 100) : 0;
-            return `<div style="margin-bottom:0.4rem;min-width:120px">
-              <div style="display:flex;justify-content:space-between;font-size:0.8rem">
-                <span class="text-muted">${info.title}</span><span>${pct}%</span>
-              </div>
-              <div class="progress-bar" style="height:8px;margin:0.15rem 0">
-                <div class="fill" style="width:${pct}%;background:${FSL.progressColor(pct)}"></div>
-              </div>
-            </div>`;
-          }).join("");
-          return `<tr>
-            <td><div class="flex gap-1" style="align-items:center">
-              <div class="avatar">${s.avatar || "?"}</div>
-              <div><strong>${escapeHtml(s.full_name)}</strong><br><span class="text-muted" style="font-size:0.8rem">@${escapeHtml(s.username)}</span></div>
-            </div></td>
-            <td colspan="4">${bars || "—"}</td>
-            <td class="text-muted" style="font-size:0.85rem">${FSL.formatDate(p.last_activity)}</td>
-          </tr>`;
-        }).join("");
-      } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="color:var(--danger)">${e.message}</td></tr>`;
-      }
-    }
-
-    async function loadContent() {
-      const box = document.getElementById("content-modules");
-      if (!box) return;
-      box.innerHTML = `<div class="text-muted" style="padding:1rem">Loading lessons…</div>`;
-      try {
-        const modules = await FSL.api("/modules");
-        if (!modules || !modules.length) {
-          box.innerHTML = `<p class="text-muted">No modules available.</p>`;
-          return;
-        }
-        box.innerHTML = modules.map((m) => `
-          <div class="module-card" onclick="showModuleLessons('${m.id}')">
-            <div class="module-icon">${m.icon || "📚"}</div>
-            <h3>${m.title}</h3>
-            <p>${m.description || ""}</p>
-            <div class="module-meta"><span>${m.total_lessons || 0} lessons</span><span class="badge-pill">${m.subtitle || m.id}</span></div>
-          </div>`).join("");
-      } catch (e) {
-        box.innerHTML = `<p style="color:var(--danger)">Could not load lessons: ${e.message}</p>`;
-        console.error(e);
-      }
-    }
-
-    async function showModuleLessons(moduleId) {
-      const lessons = await FSL.api(`/lessons?module=${moduleId}`);
-      document.getElementById("content-lessons").innerHTML = `
-        <h2 style="margin:1.5rem 0 1rem">${moduleId.charAt(0).toUpperCase() + moduleId.slice(1)} Lessons</h2>
-        <div class="lessons-grid">
-          ${lessons.map((l) => `
-            <div class="lesson-card">
-              <span class="badge">${l.sign || l.title}</span>
-              <h4>${escapeHtml(l.title)}</h4>
-              <p>${escapeHtml(l.description)}</p>
-              <div class="text-muted" style="font-size:0.8rem">~${l.estimated_minutes} min · Difficulty ${l.difficulty}/3</div>
-            </div>`).join("")}
-        </div>`;
-    }
-
-    function setRecogStatus(text, cls) {
-      const el = document.getElementById("recog-status");
-      el.textContent = text;
-      el.className = "recog-status" + (cls ? " " + cls : "");
-    }
-
-    async function startRecognition() {
-      if (recognizing) return;
-      const video = document.getElementById("input-video");
-      const placeholder = document.getElementById("cam-placeholder");
-      setRecogStatus("Starting camera…");
-      document.getElementById("btn-start-cam").disabled = true;
-      try {
-        hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-        hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.5 });
-        hands.onResults(onHandResults);
-        camera = new Camera(video, {
-          onFrame: async () => { if (hands && recognizing) await hands.send({ image: video }); },
-          width: 640, height: 480,
-        });
-        await camera.start();
-        recognizing = true;
-        placeholder.style.display = "none";
-        document.getElementById("btn-stop-cam").disabled = false;
-        setRecogStatus("● Live", "live");
-        FSL.toast("Camera started — show a letter handshape");
-      } catch (err) {
-        console.error(err);
-        setRecogStatus("Camera error", "error");
-        document.getElementById("btn-start-cam").disabled = false;
-        FSL.toast("Could not access camera: " + err.message, "error");
-      }
-    }
-
-    function stopRecognition() {
-      recognizing = false;
-      if (camera) { try { camera.stop(); } catch (_) {} camera = null; }
-      hands = null;
-      const video = document.getElementById("input-video");
-      if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
-      document.getElementById("cam-placeholder").style.display = "grid";
-      document.getElementById("btn-start-cam").disabled = false;
-      document.getElementById("btn-stop-cam").disabled = true;
-      setRecogStatus("Stopped");
-      document.getElementById("recog-letter").textContent = "—";
-      document.getElementById("recog-conf").textContent = "Confidence: —";
-      document.getElementById("recog-bar-fill").style.width = "0%";
-      document.getElementById("recog-top").innerHTML = "";
-    }
-
-    function onHandResults(results) {
-      const canvas = document.getElementById("output-canvas");
-      const video = document.getElementById("input-video");
-      const ctx = canvas.getContext("2d");
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-      ctx.save();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        const landmarks = results.multiHandLandmarks[0];
-        if (typeof drawConnectors === "function") {
-          drawConnectors(ctx, landmarks, HAND_CONNECTIONS, { color: "#5eb0e0", lineWidth: 2 });
-          drawLandmarks(ctx, landmarks, { color: "#2b7bb9", lineWidth: 1, radius: 3 });
-        }
-        const now = Date.now();
-        if (now - lastSend >= SEND_INTERVAL_MS) {
-          lastSend = now;
-          const flat = [];
-          for (const lm of landmarks) flat.push(lm.x, lm.y, lm.z);
-          sendLandmarks(flat);
-        }
-      } else {
-        document.getElementById("recog-letter").textContent = "—";
-        document.getElementById("recog-conf").textContent = "No hand detected";
-        document.getElementById("recog-bar-fill").style.width = "0%";
-      }
-      ctx.restore();
-    }
-
-    async function sendLandmarks(flat) {
-      try {
-        const res = await FSL.api("/recognize", { method: "POST", body: { landmarks: flat } });
-        document.getElementById("recog-letter").textContent = res.letter || "?";
-        const confPct = Math.round((res.confidence || 0) * 100);
-        document.getElementById("recog-conf").textContent = "Confidence: " + confPct + "%";
-        document.getElementById("recog-bar-fill").style.width = confPct + "%";
-        if (res.top && res.top.length) {
-          document.getElementById("recog-top").innerHTML =
-            '<div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.35rem;text-align:left">Top predictions</div>' +
-            res.top.map((t) => `<div class="recog-top-item"><span><strong>${t.letter}</strong></span><span>${Math.round(t.confidence * 100)}%</span></div>`).join("");
-        }
-      } catch (e) { console.warn("recognize error", e); }
-    }
-
-    function loadProfile() {
-      const u = FSL.user || {};
-      const n = document.getElementById("prof-name");
-      const un = document.getElementById("prof-user");
-      const em = document.getElementById("prof-email");
-      if (n) n.value = u.full_name || "";
-      if (un) un.value = u.username || "";
-      if (em) em.value = u.email || "";
-    }
-    function saveProfile() { FSL.toast("Profile saved (demo)", "success"); }
-    function logout() {
-      if (typeof recognizing !== "undefined" && recognizing) stopRecognition();
-      localStorage.removeItem("fsl_token");
-      localStorage.removeItem("fsl_user");
-      location.href = "/login.html";
-    }
-    function showView(name, el) {
-      if (name !== "recognize" && recognizing) stopRecognition();
-      ["content", "classrooms", "profile", "overview", "students", "recognize"].forEach((v) => {
-        document.getElementById("view-" + v).classList.toggle("hidden", v !== name);
-      });
-      document.querySelectorAll(".sidebar-nav a").forEach((a) => a.classList.remove("active"));
-      if (el) el.classList.add("active");
-      else {
-        const link = document.querySelector('.sidebar-nav a[data-view="' + name + '"]');
-        if (link) link.classList.add("active");
-      }
-      if (name === "content") loadContent();
-      if (name === "profile") loadProfile();
-      if (name === "students" && selectedClassroomId) loadStudents();
-    }
-
-    
-    function regenStudentCreds() {
-      const u = "stu" + Math.random().toString(36).slice(2, 8);
-      const p = Math.random().toString(36).slice(-10);
-      const ue = document.getElementById("stu-user");
-      const pe = document.getElementById("stu-pass");
-      if (ue) ue.value = u;
-      if (pe) pe.value = p;
-    }
-    function openAddStudentModal() {
-      regenStudentCreds();
-
-      const sel = document.getElementById("classroom-select");
-      if (!sel || !sel.value) { FSL.toast("Select a classroom first", "error"); return; }
-      document.getElementById("created-creds").classList.add("hidden");
-      const m = document.getElementById("modal-add-student");
-      m.classList.remove("hidden"); m.style.display = "grid";
-    }
-    function closeAddStudentModal() {
-      const m = document.getElementById("modal-add-student");
-      m.classList.add("hidden"); m.style.display = "none";
-    }
-    async function createStudent(e) {
-      e.preventDefault();
-      const cid = document.getElementById("classroom-select").value;
-      if (!cid) { FSL.toast("Select a classroom first", "error"); return; }
-      const fd = new FormData(e.target);
-      try {
-        const res = await FSL.api(`/classrooms/${cid}/students`, {
-          method: "POST",
-          body: {
-            full_name: fd.get("full_name"),
-            username: fd.get("username"),
-            password: fd.get("password"),
-            email: fd.get("email") || null,
-          },
-        });
-        const box = document.getElementById("created-creds");
-        box.classList.remove("hidden");
-        box.innerHTML = `<strong>Share these credentials with the student:</strong><br>
-          Username: <code>${res.credentials.username}</code><br>
-          Password: <code>${res.credentials.password}</code>`;
-        FSL.toast("Student created and enrolled");
-        e.target.reset();
-        loadStudents();
-      } catch (err) { FSL.toast(err.message, "error"); }
-    }
-
-    function openStudentsPanel() {
-      const sel = document.getElementById("classroom-select");
-      // populate select from teacher classrooms
-      loadOverview().then(() => {
-        showView("students");
-        const first = document.getElementById("classroom-select");
-        if (first && first.options.length) loadStudents();
-      });
-    }
-    function openCreateModal() {
-      const m = document.getElementById("modal-create");
-      m.classList.remove("hidden");
-      m.style.display = "grid";
-    }
-    function closeCreateModal() {
-      const m = document.getElementById("modal-create");
-      m.classList.add("hidden");
-      m.style.display = "none";
-    }
-
-    async function createClassroom(e) {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      try {
-        const c = await FSL.api("/classrooms", { method: "POST", body: { name: fd.get("name"), description: fd.get("description") } });
-        FSL.toast("Classroom created! Code: " + c.code);
-        closeCreateModal();
-        e.target.reset();
-        await loadOverview();
-        showView("classrooms");
-      } catch (err) { FSL.toast(err.message, "error"); }
-    }
-
-    function escapeHtml(str) {
-      if (!str) return "";
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    }
-
-    loadOverview();
-    // Default tab = FSL Lessons — load content on first paint
-    loadContent();
-    showView('content');
-  </script>
-
+  <!-- ADD STUDENT MODAL -->
   <div id="modal-add-student" class="modal-overlay hidden" style="display:none">
     <div class="modal-card">
-      <h2 style="margin-bottom:0.5rem">Add Student Account</h2>
-      <p class="text-muted" style="margin-bottom:1rem;font-size:0.95rem">Creates a login for the student and enrolls them in the selected classroom. Share the username & password with the student.</p>
-      <form onsubmit="createStudent(event)">
-        <div class="form-group"><label>Full Name</label><input class="form-control" name="full_name" required placeholder="Juan Dela Cruz" /></div>
-        <div class="form-group"><label>Username (auto)</label><input class="form-control" name="username" id="stu-user" required minlength="3" /></div>
-        <div class="form-group"><label>Password (auto)</label>
-          <div class="flex gap-1">
-            <input class="form-control" name="password" id="stu-pass" required minlength="4" />
-            <button type="button" class="btn btn-ghost" onclick="regenStudentCreds()">Regenerate</button>
+      <h2 class="font-headline-md text-headline-md text-primary mb-1 flex items-center gap-1.5"><span
+          class="material-symbols-outlined text-2xl">person_add</span> Add Student</h2>
+      <p class="text-xs text-on-surface-variant mb-4">Create a student account. They will enroll in the selected
+          classroom automatically.</p>
+      <form onsubmit="createStudent(event)" class="space-y-3">
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface">Full Name</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            name="full_name" required placeholder="Juan Dela Cruz" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface">Username (auto-generated)</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            name="username" id="stu-user" required minlength="3" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface">Password (auto-generated)</label>
+          <div class="flex gap-2">
+            <input
+              class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+              name="password" id="stu-pass" required minlength="4" />
+            <button type="button"
+              class="px-3 border border-outline rounded-lg text-xs font-bold bg-surface-container hover:bg-surface-container-high transition-colors"
+              onclick="regenStudentCreds()">Gen</button>
           </div>
         </div>
-        <div class="form-group"><label>Email (optional)</label><input class="form-control" name="email" type="email" /></div>
-        <div class="flex gap-1" style="justify-content:flex-end;margin-top:1rem">
-          <button type="button" class="btn btn-ghost" onclick="closeAddStudentModal()">Cancel</button>
-          <button type="submit" class="btn">Create & Enroll</button>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface">Email (optional)</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            name="email" type="email" placeholder="student@school.edu.ph" />
+        </div>
+        <div class="flex gap-2 justify-end mt-6">
+          <button type="button"
+            class="px-4 py-2 border border-outline rounded-lg text-xs font-bold hover:bg-surface-container transition-colors"
+            onclick="closeAddStudentModal()">Cancel</button>
+          <button type="submit"
+            class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary-container transition-colors shadow-sm shadow-primary/20">Create
+            & Enroll</button>
         </div>
       </form>
-      <div id="created-creds" class="hidden mt-2" style="padding:1rem;background:var(--success-soft);border-radius:12px;border:1px solid #b5e5cf"></div>
+      <div id="created-creds"
+        class="hidden mt-3 p-3 bg-surface-container border border-outline-variant/60 rounded-xl text-xs leading-relaxed font-semibold">
+      </div>
     </div>
   </div>
 
+  <!-- EDIT CLASSROOM MODAL -->
+  <div id="modal-edit" class="modal-overlay hidden" style="display:none;">
+    <div class="modal-card">
+      <h2 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-1.5"><span
+          class="material-symbols-outlined text-2xl">edit</span> Edit Classroom</h2>
+      <form onsubmit="editClassroom(event)" class="space-y-4">
+        <input type="hidden" id="edit-classroom-id" name="id" />
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface">Classroom Name</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            id="edit-classroom-name" name="name" required placeholder="e.g. Grade 3 - Hope" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface">Description (optional)</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            id="edit-classroom-desc" name="description" placeholder="FSL Vocabulary for beginners" />
+        </div>
+        <div class="flex gap-2 justify-end mt-6">
+          <button type="button"
+            class="px-4 py-2 border border-outline rounded-lg text-xs font-bold hover:bg-surface-container transition-colors"
+            onclick="closeEditModal()">Cancel</button>
+          <button type="submit"
+            class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary-container transition-colors shadow-sm shadow-primary/20">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DELETE CLASSROOM CONFIRM MODAL -->
+  <div id="modal-delete" class="modal-overlay hidden" style="display:none;">
+    <div class="modal-card max-w-sm">
+      <h2 class="font-headline-md text-headline-md text-error mb-2 flex items-center gap-1.5"><span
+          class="material-symbols-outlined text-2xl">warning</span> Delete Classroom</h2>
+      <p class="text-xs text-on-surface-variant mb-6 leading-relaxed">Are you sure you want to delete <strong id="delete-classroom-name-display" class="text-on-surface"></strong>? This action is permanent and will delete all student records and progress inside this classroom.</p>
+      <input type="hidden" id="delete-classroom-id" />
+      <div class="flex gap-2 justify-end">
+        <button type="button"
+          class="px-4 py-2 border border-outline rounded-lg text-xs font-bold hover:bg-surface-container transition-colors"
+          onclick="closeDeleteModal()">Cancel</button>
+        <button type="button"
+          class="px-4 py-2 bg-error text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-colors shadow-sm shadow-error/20"
+          onclick="deleteClassroomConfirm()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT STUDENT MODAL -->
+  <div id="modal-edit-student" class="modal-overlay hidden" style="display:none;">
+    <div class="modal-card">
+      <h2 class="font-headline-md text-headline-md text-primary mb-1 flex items-center gap-1.5"><span
+          class="material-symbols-outlined text-2xl">manage_accounts</span> Edit Student</h2>
+      <p class="text-xs text-on-surface-variant mb-4">Update the student's name, email address, or set a new password.</p>
+      <form onsubmit="saveStudentEdit(event)" class="space-y-3">
+        <input type="hidden" id="edit-student-id" />
+        <input type="hidden" id="edit-student-classroom-id" />
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface" for="edit-student-name">Full Name</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            id="edit-student-name" name="full_name" required placeholder="Juan Dela Cruz" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface" for="edit-student-username">Username (read-only)</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest outline-none text-sm opacity-60"
+            id="edit-student-username" disabled />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface" for="edit-student-email">Email (optional)</label>
+          <input
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            id="edit-student-email" name="email" type="email" placeholder="student@school.edu.ph" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-bold text-on-surface" for="edit-student-pass">New Password (leave blank to keep current)</label>
+          <input type="password"
+            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
+            id="edit-student-pass" name="password" placeholder="Leave blank to keep current" />
+        </div>
+        <div class="flex gap-2 justify-end mt-6">
+          <button type="button"
+            class="px-4 py-2 border border-outline rounded-lg text-xs font-bold hover:bg-surface-container transition-colors"
+            onclick="closeEditStudentModal()">Cancel</button>
+          <button type="submit"
+            class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary-container transition-colors shadow-sm shadow-primary/20">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DELETE STUDENT CONFIRM MODAL -->
+  <div id="modal-delete-student" class="modal-overlay hidden" style="display:none;">
+    <div class="modal-card max-w-sm">
+      <h2 class="font-headline-md text-headline-md text-error mb-2 flex items-center gap-1.5"><span
+          class="material-symbols-outlined text-2xl">warning</span> Remove Student</h2>
+      <p class="text-xs text-on-surface-variant mb-6 leading-relaxed">Are you sure you want to permanently delete <strong id="delete-student-name-display" class="text-on-surface"></strong>? This will remove their account, progress, and quiz records. This action cannot be undone.</p>
+      <input type="hidden" id="delete-student-id" />
+      <input type="hidden" id="delete-student-classroom-id" />
+      <div class="flex gap-2 justify-end">
+        <button type="button"
+          class="px-4 py-2 border border-outline rounded-lg text-xs font-bold hover:bg-surface-container transition-colors"
+          onclick="closeDeleteStudentModal()">Cancel</button>
+        <button type="button"
+          class="px-4 py-2 bg-error text-white rounded-lg text-xs font-bold hover:bg-red-700 transition-colors shadow-sm shadow-error/20"
+          onclick="deleteStudentConfirm()">Delete Student</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js?v=2"></script>
+  <script src="/js/teacher.js?v=2" defer></script>
+
 </body>
+
 </html>

@@ -1,139 +1,210 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="light" lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign In · FSL Learn</title>
-  <link rel="stylesheet" href="/css/styles.css" />
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>SignWise | Welcome</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Quicksand:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
   <link rel="icon" href="/assets/logo.svg" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "error": "#ba1a1a",
+            "surface-container": "#e5eeff",
+            "tertiary-fixed": "#ffddb8",
+            "outline-variant": "#c3c6d7",
+            "inverse-primary": "#b4c5ff",
+            "surface-container-high": "#dce9ff",
+            "on-secondary-container": "#006f66",
+            "tertiary-container": "#996100",
+            "surface-dim": "#cbdbf5",
+            "on-tertiary-fixed-variant": "#653e00",
+            "primary": "#004ac6",
+            "on-tertiary-fixed": "#2a1700",
+            "on-secondary-fixed": "#00201d",
+            "on-error": "#ffffff",
+            "primary-container": "#2563eb",
+            "on-error-container": "#93000a",
+            "outline": "#737686",
+            "surface-tint": "#0053db",
+            "tertiary-fixed-dim": "#ffb95f",
+            "secondary": "#006a61",
+            "on-background": "#0b1c30",
+            "primary-fixed-dim": "#b4c5ff",
+            "on-secondary-fixed-variant": "#005049",
+            "surface-variant": "#d3e4fe",
+            "background": "#f8f9ff",
+            "on-primary": "#ffffff",
+            "inverse-on-surface": "#eaf1ff",
+            "error-container": "#ffdad6",
+            "primary-fixed": "#dbe1ff",
+            "surface-container-highest": "#d3e4fe",
+            "surface-bright": "#f8f9ff",
+            "on-surface": "#0b1c30",
+            "on-tertiary-container": "#ffeedd",
+            "secondary-fixed": "#89f5e7",
+            "surface-container-low": "#eff4ff",
+            "on-tertiary": "#ffffff",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-primary-fixed": "#00174b",
+            "tertiary": "#784b00",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary": "#ffffff",
+            "on-primary-container": "#eeefff",
+            "surface": "#f8f9ff",
+            "inverse-surface": "#213145",
+            "on-surface-variant": "#434655",
+            "secondary-container": "#86f2e4",
+            "on-primary-fixed-variant": "#003ea8"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1.5rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "base": "8px",
+            "sm": "12px",
+            "md": "24px",
+            "xs": "4px",
+            "margin-desktop": "48px",
+            "margin-mobile": "16px",
+            "xl": "64px",
+            "gutter": "24px",
+            "lg": "40px"
+          },
+          "fontFamily": {
+            "headline-xl": ["Quicksand"],
+            "label-sm": ["Inter"],
+            "label-md": ["Inter"],
+            "headline-lg": ["Quicksand"],
+            "body-md": ["Inter"],
+            "headline-md": ["Quicksand"],
+            "headline-lg-mobile": ["Quicksand"],
+            "body-lg": ["Inter"]
+          },
+          "fontSize": {
+            "headline-xl": ["40px", {"lineHeight": "48px", "fontWeight": "700"}],
+            "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+            "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+            "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+            "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+            "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+  <link rel="stylesheet" href="/css/login.css" />
 </head>
-<body>
-  <div class="auth-page">
-    <div class="card-3d auth-card">
-      <a href="/" class="logo">
-        <div class="logo-icon"><img src="/assets/logo.svg" alt="FSL Learn" width="48" height="48" /></div>
-        <span>FSL <span class="brand-accent">Learn</span></span>
-      </a>
+<body class="bg-background text-on-surface min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden relative">
 
-      <div class="auth-tabs">
-        <button type="button" class="active" id="tab-login" onclick="switchTab('login')">Sign In</button>
-        <button type="button" id="tab-register" onclick="switchTab('register')">Teacher Register</button>
-      </div>
-
-      <!-- LOGIN (teachers + students) -->
-      <form id="form-login" onsubmit="handleLogin(event)">
-        <p class="text-muted text-center" style="font-size:0.95rem;margin-bottom:1rem">
-          <strong>Students:</strong> use the username &amp; password your teacher gave you.<br />
-          <strong>Teachers:</strong> sign in with your account.
-        </p>
-        <div class="form-group">
-          <label>Username</label>
-          <input class="form-control" name="username" required placeholder="Your username" autocomplete="username" />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input class="form-control" name="password" type="password" required placeholder="••••••••" autocomplete="current-password" />
-        </div>
-        <button type="submit" class="btn btn-block">Sign In</button>
-      </form>
-
-      <!-- REGISTER — TEACHERS ONLY (no student option) -->
-      <form id="form-register" class="hidden" onsubmit="handleRegister(event)">
-        <p class="text-muted text-center" style="font-size:0.95rem;margin-bottom:1rem;padding:0.75rem;background:var(--primary-soft);border-radius:12px">
-          👩‍🏫 <strong>Teachers only.</strong><br />
-          Students cannot create accounts. Teachers add students under <em>Students → + Add Student</em>.
-        </p>
-        <div class="form-group">
-          <label>Full Name</label>
-          <input class="form-control" name="full_name" required placeholder="Maria Santos" />
-        </div>
-        <div class="form-group">
-          <label>Email (optional)</label>
-          <input class="form-control" name="email" type="email" placeholder="teacher@school.edu.ph" />
-        </div>
-        <div class="form-group">
-          <label>Username</label>
-          <input class="form-control" name="username" required minlength="3" placeholder="teacher_maria" autocomplete="username" />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input class="form-control" name="password" type="password" required minlength="4" placeholder="••••••••" autocomplete="new-password" />
-        </div>
-        <button type="submit" class="btn btn-block">Create Teacher Account</button>
-      </form>
+  <!-- Full screen animated shader background -->
+  <div class="fixed inset-0 z-0">
+    <div class="absolute inset-0 w-full h-full" style="display:block;">
+      <canvas id="shader-canvas-ANIMATION_2" style="display:block;width:100%;height:100%"></canvas>
     </div>
   </div>
 
+  <!-- Main Content Container -->
+  <main class="relative z-10 w-full max-w-md">
+    <!-- Header / Logo Area -->
+    <div class="flex flex-col items-center mb-4 animate-[fade-in-down_0.8s_ease-out]">
+      <a href="/" class="bg-primary p-2 rounded-xl shadow-lg mb-2 hover:scale-105 transition-all">
+        <span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings: 'FILL' 1;">sign_language</span>
+      </a>
+      <h1 class="font-headline-md text-2xl text-primary drop-shadow-sm font-bold">SignWise</h1>
+      <p class="text-xs text-on-surface-variant font-medium">Empowering connections through signs.</p>
+    </div>
+
+    <!-- Glassmorphism Card -->
+    <div class="glass-card rounded-2xl p-5 transition-all duration-500 hover:shadow-2xl">
+      <!-- Custom Tabs -->
+      <div class="flex border-b border-outline-variant mb-4">
+        <button class="flex-1 pb-2 text-center font-label-md text-xs transition-all tab-active" id="tab-student" onclick="switchTab('student')">
+          <span class="material-symbols-outlined mr-1 text-sm">child_care</span> Student & Teacher Login
+        </button>
+        <button class="flex-1 pb-2 text-center font-label-md text-xs transition-all text-on-surface-variant hover:text-primary" id="tab-teacher" onclick="switchTab('teacher')">
+          <span class="material-symbols-outlined mr-1 text-sm">school</span> Teacher Join
+        </button>
+      </div>
+
+      <!-- SIGN IN FORM (Both Students & Teachers) -->
+      <form class="space-y-3" id="form-login" onsubmit="handleLogin(event)">
+        <p class="text-[11px] text-on-surface-variant text-center bg-surface-container/60 p-2 rounded-xl border border-outline-variant/50 leading-relaxed">
+          <strong>Students:</strong> Sign in with the username & password given by your teacher.<br/>
+          <strong>Teachers:</strong> Use your registered credentials.
+        </p>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-on-surface flex items-center" for="student-user">
+            <span class="material-symbols-outlined text-xs mr-1 text-primary">person</span> Username
+          </label>
+          <input class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-xs" id="student-user" name="username" placeholder="E.g. student1 or teacher1" required="" type="text"/>
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-on-surface flex items-center" for="student-pass">
+            <span class="material-symbols-outlined text-xs mr-1 text-primary">key</span> Password
+          </label>
+          <input class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary transition-all outline-none text-xs" id="student-pass" name="password" placeholder="••••••••" required="" type="password"/>
+        </div>
+        <button class="w-full h-10 bg-primary text-white font-semibold text-xs rounded-lg btn-3d uppercase tracking-wider flex items-center justify-center gap-1 mt-3" type="submit">
+          Start Learning <span class="material-symbols-outlined text-sm">rocket_launch</span>
+        </button>
+      </form>
+
+      <!-- Teacher Registration Form -->
+      <form class="space-y-3 hidden-tab" id="form-register" onsubmit="handleRegister(event)">
+        <p class="text-[11px] text-on-surface-variant text-center bg-surface-container/60 p-2 rounded-xl border border-outline-variant/50 leading-relaxed">
+          <strong>Teachers only.</strong> Students cannot create accounts directly. Add students under your teacher dashboard.
+        </p>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-on-surface flex items-center" for="teacher-name">
+            Full Name
+          </label>
+          <input class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-secondary focus:border-secondary transition-all outline-none text-xs" id="teacher-name" name="full_name" placeholder="Professor Jane Doe" required="" type="text"/>
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-on-surface flex items-center" for="teacher-email">
+            Work Email (optional)
+          </label>
+          <input class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-secondary focus:border-secondary transition-all outline-none text-xs" id="teacher-email" name="email" placeholder="jane.doe@school.edu" type="email"/>
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-on-surface flex items-center" for="teacher-username">
+            Username
+          </label>
+          <input class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-secondary focus:border-secondary transition-all outline-none text-xs" id="teacher-username" name="username" placeholder="Choose a username" required="" type="text"/>
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-on-surface flex items-center" for="teacher-pass">
+            Create Password
+          </label>
+          <input class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-secondary focus:border-secondary transition-all outline-none text-xs" id="teacher-pass" name="password" placeholder="At least 4 characters" required="" type="password"/>
+        </div>
+        <button class="w-full h-10 bg-secondary text-white font-semibold text-xs rounded-lg btn-3d-secondary uppercase tracking-wider flex items-center justify-center gap-1 mt-3" type="submit">
+          Create Teacher Account <span class="material-symbols-outlined text-sm">assignment_ind</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Footer Help Link -->
+    <footer class="mt-4 text-center">
+      <p class="text-[11px] text-on-surface-variant/80 bg-white/30 backdrop-blur-sm inline-block px-3 py-1.5 rounded-full">
+        Need help? Contact <a class="text-primary font-bold hover:underline" href="mailto:support@signwise.edu">support@signwise.edu</a>
+      </p>
+    </footer>
+  </main>
+
   <script src="/js/app.js"></script>
-  <script>
-    function switchTab(tab) {
-      const loginForm = document.getElementById("form-login");
-      const regForm = document.getElementById("form-register");
-      const tabLogin = document.getElementById("tab-login");
-      const tabReg = document.getElementById("tab-register");
-      if (tab === "login") {
-        loginForm.classList.remove("hidden");
-        regForm.classList.add("hidden");
-        tabLogin.classList.add("active");
-        tabReg.classList.remove("active");
-      } else {
-        loginForm.classList.add("hidden");
-        regForm.classList.remove("hidden");
-        tabLogin.classList.remove("active");
-        tabReg.classList.add("active");
-      }
-    }
-
-    async function handleLogin(e) {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const btn = e.target.querySelector("button[type=submit]");
-      btn.disabled = true;
-      btn.textContent = "Signing in…";
-      try {
-        const data = await FSL.api("/auth/login", {
-          method: "POST",
-          body: { username: fd.get("username"), password: fd.get("password") },
-        });
-        FSL.setAuth(data.token, data.user);
-        FSL.toast("Welcome, " + (data.user.full_name || data.user.username) + "!");
-        setTimeout(() => {
-          window.location.href = data.user.role === "teacher" ? "/teacher.html" : "/student.html";
-        }, 400);
-      } catch (err) {
-        FSL.toast(err.message, "error");
-        btn.disabled = false;
-        btn.textContent = "Sign In";
-      }
-    }
-
-    async function handleRegister(e) {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const btn = e.target.querySelector("button[type=submit]");
-      btn.disabled = true;
-      btn.textContent = "Creating…";
-      try {
-        // Always teacher — no student self-registration
-        const data = await FSL.api("/auth/register", {
-          method: "POST",
-          body: {
-            username: fd.get("username"),
-            password: fd.get("password"),
-            email: fd.get("email") || null,
-            full_name: fd.get("full_name"),
-            role: "teacher",
-          },
-        });
-        FSL.setAuth(data.token, data.user);
-        FSL.toast("Teacher account created!");
-        setTimeout(() => { window.location.href = "/teacher.html"; }, 500);
-      } catch (err) {
-        FSL.toast(err.message, "error");
-        btn.disabled = false;
-        btn.textContent = "Create Teacher Account";
-      }
-    }
-  </script>
+  <script src="/js/login.js" defer></script>
 </body>
 </html>

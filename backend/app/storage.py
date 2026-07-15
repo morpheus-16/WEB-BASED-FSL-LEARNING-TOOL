@@ -81,6 +81,62 @@ class Storage:
         finally:
             db.close()
 
+    def update_user(self, user_id: int, data: Dict) -> Optional[Dict]:
+        db = _session()
+        try:
+            u = db.query(User).filter(User.id == user_id).first()
+            if not u:
+                return None
+            if "full_name" in data and data["full_name"]:
+                u.full_name = data["full_name"]
+                u.avatar = "".join(p[0] for p in data["full_name"].split()[:2]).upper() or "U"
+            if "email" in data:
+                u.email = data["email"]
+            if "password" in data and data["password"]:
+                u.password = data["password"]
+            db.commit()
+            db.refresh(u)
+            return u.to_dict()
+        finally:
+            db.close()
+
+    def remove_student_from_classroom(self, student_id: int, classroom_id: int) -> bool:
+        db = _session()
+        try:
+            m = (
+                db.query(ClassroomMember)
+                .filter(
+                    ClassroomMember.student_id == student_id,
+                    ClassroomMember.classroom_id == classroom_id,
+                )
+                .first()
+            )
+            if m:
+                db.delete(m)
+                db.commit()
+                return True
+            return False
+        finally:
+            db.close()
+
+    def delete_user(self, user_id: int) -> bool:
+        db = _session()
+        try:
+            u = db.query(User).filter(User.id == user_id).first()
+            if not u:
+                return False
+            # Remove all classroom memberships
+            db.query(ClassroomMember).filter(ClassroomMember.student_id == user_id).delete()
+            # Remove progress records
+            db.query(Progress).filter(Progress.user_id == user_id).delete()
+            # Remove quiz results
+            db.query(QuizResult).filter(QuizResult.user_id == user_id).delete()
+            db.delete(u)
+            db.commit()
+            return True
+        finally:
+            db.close()
+
     def create_classroom(self, teacher_id: int, name: str, description: str = "") -> Dict:
         db = _session()
         try:
@@ -100,6 +156,33 @@ class Storage:
             return c.to_dict(student_ids=[])
         finally:
             db.close()
+
+    def update_classroom(self, classroom_id: int, name: str, description: str) -> Optional[Dict]:
+        db = _session()
+        try:
+            c = db.query(Classroom).filter(Classroom.id == classroom_id).first()
+            if c:
+                c.name = name
+                c.description = description or ""
+                db.commit()
+                db.refresh(c)
+                return c.to_dict()
+            return None
+        finally:
+            db.close()
+
+    def delete_classroom(self, classroom_id: int) -> bool:
+        db = _session()
+        try:
+            c = db.query(Classroom).filter(Classroom.id == classroom_id).first()
+            if c:
+                db.delete(c)
+                db.commit()
+                return True
+            return False
+        finally:
+            db.close()
+
 
     def get_classroom_by_code(self, code: str) -> Optional[Dict]:
         db = _session()

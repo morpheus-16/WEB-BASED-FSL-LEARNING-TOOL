@@ -40,10 +40,14 @@ app.add_middleware(
 # Serve static frontend
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
-    app.mount("/css", StaticFiles(directory=str(FRONTEND_DIR / "css")), name="css")
-    app.mount("/js", StaticFiles(directory=str(FRONTEND_DIR / "js")), name="js")
-    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
-    app.mount("/pages", StaticFiles(directory=str(FRONTEND_DIR / "pages")), name="pages")
+    if (FRONTEND_DIR / "css").exists():
+        app.mount("/css", StaticFiles(directory=str(FRONTEND_DIR / "css")), name="css")
+    if (FRONTEND_DIR / "js").exists():
+        app.mount("/js", StaticFiles(directory=str(FRONTEND_DIR / "js")), name="js")
+    if (FRONTEND_DIR / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIR / "assets")), name="assets")
+    if (FRONTEND_DIR / "pages").exists():
+        app.mount("/pages", StaticFiles(directory=str(FRONTEND_DIR / "pages")), name="pages")
 
 
 # ========== Schemas ==========
@@ -63,6 +67,12 @@ class RegisterRequest(BaseModel):
 class CreateClassroomRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=80)
     description: Optional[str] = ""
+
+
+class UpdateClassroomRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=80)
+    description: Optional[str] = ""
+
 
 
 class JoinClassroomRequest(BaseModel):
@@ -202,6 +212,29 @@ def get_classroom(classroom_id: int, user: Dict = Depends(get_current_user)):
     return c
 
 
+@app.put("/api/classrooms/{classroom_id}")
+def update_classroom(classroom_id: int, body: UpdateClassroomRequest, teacher: Dict = Depends(require_teacher)):
+    c = storage.get_classroom_by_id(classroom_id)
+    if not c or c["teacher_id"] != teacher["id"]:
+        raise HTTPException(status_code=404, detail="Classroom not found")
+    updated = storage.update_classroom(classroom_id, body.name, body.description or "")
+    if not updated:
+        raise HTTPException(status_code=404, detail="Classroom not found")
+    return updated
+
+
+@app.delete("/api/classrooms/{classroom_id}")
+def delete_classroom(classroom_id: int, teacher: Dict = Depends(require_teacher)):
+    c = storage.get_classroom_by_id(classroom_id)
+    if not c or c["teacher_id"] != teacher["id"]:
+        raise HTTPException(status_code=404, detail="Classroom not found")
+    success = storage.delete_classroom(classroom_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to delete classroom")
+    return {"message": "Classroom deleted successfully"}
+
+
+
 @app.get("/api/classrooms/{classroom_id}/students")
 def classroom_students(classroom_id: int, teacher: Dict = Depends(require_teacher)):
     c = storage.get_classroom_by_id(classroom_id)
@@ -287,6 +320,12 @@ class CreateStudentRequest(BaseModel):
     email: Optional[str] = None
 
 
+class UpdateStudentRequest(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+
 @app.post("/api/classrooms/{classroom_id}/students")
 def teacher_create_student(classroom_id: int, body: CreateStudentRequest, teacher: Dict = Depends(require_teacher)):
     """Teacher creates a student account and enrolls them in the classroom."""
@@ -311,6 +350,48 @@ def teacher_create_student(classroom_id: int, body: CreateStudentRequest, teache
         "credentials": {"username": body.username, "password": body.password},
         "message": "Student created and enrolled. Share these login credentials with the student.",
     }
+
+
+@app.put("/api/classrooms/{classroom_id}/students/{student_id}")
+def teacher_update_student(
+    classroom_id: int,
+    student_id: int,
+    body: UpdateStudentRequest,
+    teacher: Dict = Depends(require_teacher),
+):
+    """Teacher edits a student's profile (name, email, password)."""
+    c = storage.get_classroom_by_id(classroom_id)
+    if not c or c["teacher_id"] != teacher["id"]:
+        raise HTTPException(status_code=404, detail="Classroom not found")
+    # Ensure student is in this classroom
+    students = storage.get_classroom_students(classroom_id)
+    if not any(s["id"] == student_id for s in students):
+        raise HTTPException(status_code=404, detail="Student not in this classroom")
+    updated = storage.update_user(student_id, body.model_dump(exclude_none=True))
+    if not updated:
+        raise HTTPException(status_code=404, detail="Student not found")
+    updated.pop("password", None)
+    return {"user": updated, "message": "Student updated successfully"}
+
+
+@app.delete("/api/classrooms/{classroom_id}/students/{student_id}")
+def teacher_delete_student(
+    classroom_id: int,
+    student_id: int,
+    teacher: Dict = Depends(require_teacher),
+):
+    """Teacher removes a student from the classroom (and optionally deletes their account)."""
+    c = storage.get_classroom_by_id(classroom_id)
+    if not c or c["teacher_id"] != teacher["id"]:
+        raise HTTPException(status_code=404, detail="Classroom not found")
+    students = storage.get_classroom_students(classroom_id)
+    if not any(s["id"] == student_id for s in students):
+        raise HTTPException(status_code=404, detail="Student not in this classroom")
+    # Delete the student account entirely
+    success = storage.delete_user(student_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to delete student")
+    return {"message": "Student removed successfully"}
 
 
 @app.post("/api/recognize")

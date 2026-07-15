@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\anjof\fsl-web\backend\venv
+set VIRTUAL_ENV=C:\Users\dexte\Documents\GitHub\WEB-BASED-FSL-LEARNING-TOOL\backend\venv
 
 if not defined PROMPT set PROMPT=$P$G
 

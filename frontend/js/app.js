@@ -166,6 +166,69 @@ function progressColor(p) {
 }
 
 // Expose
+// Expose getSignySVG
+function getSignySVG(expression = "neutral") {
+  let eyes = `<circle cx="44" cy="46" r="4.5" fill="#0b1c30"/><circle cx="64" cy="46" r="4.5" fill="#0b1c30"/><circle cx="45.5" cy="44" r="1.5" fill="#fff"/><circle cx="65.5" cy="44" r="1.5" fill="#fff"/>`;
+  let mouth = `<path d="M 48 54 Q 54 60 60 54" fill="none" stroke="#0b1c30" stroke-width="2.5" stroke-linecap="round"/>`;
+  let cheeks = `<circle cx="36" cy="50" r="3" fill="#ff8a8a" opacity="0.6"/><circle cx="72" cy="50" r="3" fill="#ff8a8a" opacity="0.6"/>`;
+  let accessories = "";
+  let animationClass = "animate-hover";
+
+  if (expression === "happy" || expression === "cheering") {
+    eyes = `<path d="M 40 48 L 44 44 L 48 48" fill="none" stroke="#0b1c30" stroke-width="3" stroke-linecap="round"/><path d="M 60 48 L 64 44 L 68 48" fill="none" stroke="#0b1c30" stroke-width="3" stroke-linecap="round"/>`;
+    mouth = `<path d="M 48 52 Q 54 62 60 52 Z" fill="#ba1a1a" stroke="#0b1c30" stroke-width="2" stroke-linecap="round"/>`;
+    accessories = `
+      <circle cx="28" cy="24" r="1.5" fill="#ffd700"/>
+      <circle cx="78" cy="24" r="1.5" fill="#ffd700"/>
+    `;
+    animationClass = "animate-bounce-custom";
+  } else if (expression === "comforting" || expression === "sad") {
+    eyes = `<path d="M 40 44 L 44 48 L 48 44" fill="none" stroke="#0b1c30" stroke-width="3" stroke-linecap="round"/><path d="M 60 44 L 64 48 L 68 44" fill="none" stroke="#0b1c30" stroke-width="3" stroke-linecap="round"/>`;
+    mouth = `<path d="M 50 56 Q 54 52 58 56" fill="none" stroke="#0b1c30" stroke-width="2.5" stroke-linecap="round"/>`;
+    cheeks = "";
+    accessories = `
+      <path d="M 72 44 Q 74 46 73 50" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="73" cy="52" r="1.5" fill="#60a5fa"/>
+    `;
+    animationClass = "animate-shake-custom";
+  }
+
+  return `
+    <svg viewBox="0 0 100 100" class="${animationClass}" style="width:72px;height:72px;display:block;margin:0 auto;">
+      <defs>
+        <style>
+          @keyframes hover {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+          }
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.05); }
+          }
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+          }
+          .animate-hover { animation: hover 2.5s ease-in-out infinite; }
+          .animate-bounce-custom { animation: bounce 0.6s ease-in-out infinite; }
+          .animate-shake-custom { animation: shake 0.4s ease-in-out infinite; }
+        </style>
+      </defs>
+      <!-- Base Hand Body -->
+      <path d="M 35 65 C 31 55 33 40 39 32 C 41 29 45 29 47 33 C 49 36 48 45 48 50 C 50 42 53 32 57 30 C 59 29 62 31 63 35 C 64 39 62 48 62 52 C 65 44 68 36 72 35 C 74 34 77 36 77 40 C 77 44 74 52 73 57 C 76 51 80 47 83 48 C 86 49 86 53 85 57 C 83 65 78 78 69 82 C 61 86 49 86 41 80 C 37 76 36 70 35 65 Z" fill="#ffe2c4" stroke="#ffaa66" stroke-width="3" stroke-linejoin="round"/>
+      <!-- Thumb -->
+      <path d="M 35 65 Q 23 63 25 53 Q 27 47 33 53 Z" fill="#ffe2c4" stroke="#ffaa66" stroke-width="3" stroke-linejoin="round"/>
+      <!-- Details -->
+      ${cheeks}
+      ${eyes}
+      ${mouth}
+      ${accessories}
+    </svg>
+  `;
+}
+
+// Expose
 window.FSL = {
   user: getUser(),
   api,
@@ -182,4 +245,5 @@ window.FSL = {
   initTilt,
   formatDate,
   progressColor,
+  getSignySVG,
 };
