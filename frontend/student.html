@@ -87,8 +87,7 @@
 
 <body class="text-on-surface min-h-screen relative flex flex-col">
 
-  <!-- Sticky Navbar -->
-  <nav class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-outline-variant/40 py-3 shadow-sm">
+<nav class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-outline-variant/40 py-3 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
       <a href="/student.html" class="flex items-center gap-3">
         <div class="bg-primary p-2 rounded-xl text-white shadow-md">
@@ -98,17 +97,13 @@
         <span class="font-quicksand font-bold text-lg text-primary">SignWise <span
             class="text-secondary text-sm font-semibold">Student</span></span>
       </a>
-      <div id="navbar-right" class="flex gap-2 items-center"></div>
     </div>
   </nav>
-
-  <!-- Dashboard Container -->
   <div class="flex-1 max-w-7xl w-full mx-auto flex flex-col md:flex-row relative">
 
-    <!-- Sidebar navigation -->
     <aside
-      class="w-64 p-6 flex flex-col justify-between hidden md:flex h-[calc(100vh-73px)] sticky top-[73px] border-r border-outline-variant/40 sidebar-nav">
-      <div class="space-y-6">
+      class="w-64 p-6 flex flex-col hidden md:flex h-[calc(100vh-73px)] sticky top-[73px] border-r border-outline-variant/40 sidebar-nav">
+      <div class="flex-1 space-y-6">
         <div class="flex items-center justify-between gap-1 border-b border-outline-variant/30 pb-3 mb-2">
           <span
             class="text-xs font-bold text-on-surface-variant uppercase tracking-wider sidebar-brand whitespace-nowrap">Navigation</span>
@@ -129,26 +124,25 @@
               <span class="material-symbols-outlined">meeting_room</span> <span class="sidebar-text">My Classroom</span>
             </button>
           </li>
-          <li>
-            <button class="w-full sidebar-link" data-view="profile" onclick="showView('profile', this)">
-              <span class="material-symbols-outlined">person_pin</span> <span class="sidebar-text">Profile</span>
-            </button>
-          </li>
         </ul>
       </div>
-      <div
-        class="p-4 rounded-2xl bg-surface-container border border-outline-variant/40 text-xs text-on-surface-variant font-medium leading-relaxed sidebar-text">
-        <strong class="text-primary font-quicksand font-bold text-sm block mb-1">Learning Path!</strong>
-        1. Click any lesson card<br>
-        2. Study & practice signs<br>
-        3. Pass level quizzes to earn certificates!
+
+    
+
+      <div class="px-2 space-y-2 mt-auto border-t border-outline-variant/20 pt-4">
+        <button class="w-full sidebar-link" data-view="profile" onclick="showView('profile', this)">
+          <span class="material-symbols-outlined">person_pin</span> <span class="sidebar-text">Profile Settings</span>
+        </button>
+        <button
+          class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-container text-on-surface-variant font-label-md hover:bg-outline-variant transition-colors"
+          onclick="logout()">
+          <span class="material-symbols-outlined">logout</span> <span class="sidebar-text">Logout</span>
+        </button>
       </div>
     </aside>
 
-    <!-- Main Content Panel -->
     <main class="flex-1 p-6 md:p-8 pb-24 md:pb-8 overflow-x-hidden">
 
-      <!-- MY CLASSROOM VIEW -->
       <div id="view-home" class="hidden space-y-6">
         <div class="border-b border-outline-variant/30 pb-4">
           <h1 class="font-quicksand font-bold text-2xl text-primary">Kamusta, <span id="student-name">Student</span>!
@@ -167,12 +161,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="my-classrooms"></div>
       </div>
 
-      <!-- LESSONS LIST VIEW -->
       <div id="view-learn" class="space-y-6">
         <div
           class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/30 pb-4">
           <div>
-            <h1 class="font-quicksand font-bold text-2xl text-primary">FSL Lessons</h1>
+            <h1 class="font-quicksand font-bold text-2xl text-primary">Lessons</h1>
             <p class="text-sm text-on-surface-variant">Click on a module to begin. Pass lesson quizzes to level up!</p>
           </div>
           <select
@@ -187,7 +180,6 @@
         <div id="module-quiz-area" class="mt-6"></div>
       </div>
 
-      <!-- PROFILE VIEW -->
       <div id="view-profile" class="hidden space-y-6 max-w-xl mx-auto w-full">
         <div class="border-b border-outline-variant/30 pb-4">
           <h1 class="font-quicksand font-bold text-2xl text-primary text-center">Profile settings 👤</h1>
@@ -223,7 +215,6 @@
     </main>
   </div>
 
-  <!-- Mobile Bottom Navigation Bar -->
   <div
     class="bottom-nav md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-outline-variant/40 shadow-lg z-50 flex justify-around items-center px-2">
     <button class="bottom-link active" data-view="learn" onclick="showView('learn', this)">
@@ -242,7 +233,6 @@
 
 
 
-  <!-- Duolingo Feedback Bottom Tray -->
   <div id="feedback-tray" class="feedback-tray">
     <div class="feedback-content">
       <div class="flex items-center gap-3">
