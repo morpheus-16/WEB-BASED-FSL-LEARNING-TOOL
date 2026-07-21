@@ -34,7 +34,7 @@ async function loadOverview() {
     const students = await FSL.api(`/classrooms/${c.id}/students`).catch(() => []);
     const firstFew = students.slice(0, 3);
     const remainingCount = students.length - firstFew.length;
-    
+
     const card = document.createElement("div");
     card.className = "bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between";
     card.innerHTML = `
@@ -103,7 +103,7 @@ async function loadOverview() {
       </div>
     `;
   }
-  
+
   const sel = document.getElementById("classroom-select");
   sel.innerHTML = `<option value="">Select classroom…</option>` + classrooms.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
   if (selectedClassroomId) sel.value = selectedClassroomId;
@@ -133,7 +133,7 @@ async function loadStudents() {
       return;
     }
     let modules = [];
-    try { modules = await FSL.api("/modules"); } catch (_) {}
+    try { modules = await FSL.api("/modules"); } catch (_) { }
     const lessonMap = {};
     for (const m of modules) {
       try {
@@ -193,6 +193,15 @@ async function loadStudents() {
 async function loadContent() {
   const box = document.getElementById("content-modules");
   if (!box) return;
+
+  box.classList.remove("hidden");
+
+  const libHeader = document.getElementById("library-header");
+  if (libHeader) libHeader.classList.remove("hidden");
+
+  const lessonsBox = document.getElementById("content-lessons");
+  if (lessonsBox) lessonsBox.innerHTML = "";
+
   box.innerHTML = `<div class="text-on-surface-variant text-xs py-4">Loading library modules…</div>`;
   try {
     const modules = await FSL.api("/modules");
@@ -217,25 +226,200 @@ async function loadContent() {
   }
 }
 
+let currentLessons = [];
+let activeLessonIndex = 0;
+let currentModuleTitle = "";
+
 async function showModuleLessons(moduleId) {
-  const lessons = await FSL.api(`/lessons?module=${moduleId}`);
-  document.getElementById("content-lessons").innerHTML = `
-    <h2 class="font-quicksand font-bold text-lg text-primary mb-4 mt-6">${moduleId.charAt(0).toUpperCase() + moduleId.slice(1)} Lessons</h2>
+  try {
+    currentLessons = await FSL.api(`/lessons?module=${moduleId}`);
+    currentLessons.sort((a, b) => (a.order || a.id) - (b.order || b.id));
+
+    let modTitle = moduleId.charAt(0).toUpperCase() + moduleId.slice(1);
+    if (moduleId === "alphabet") modTitle = "Alphabet";
+    else if (moduleId === "basic") modTitle = "Basic Vocabulary";
+    else if (moduleId === "intermediate") modTitle = "Intermediate Phrases";
+    currentModuleTitle = modTitle;
+
+    const modulesBox = document.getElementById("content-modules");
+    if (modulesBox) modulesBox.classList.add("hidden");
+
+    const libHeader = document.getElementById("library-header");
+    if (libHeader) libHeader.classList.add("hidden");
+
+    renderLessonsGrid();
+  } catch (err) {
+    FSL.toast(err.message, "error");
+  }
+}
+
+function renderLessonsGrid() {
+  const container = document.getElementById("content-lessons");
+  if (!container || !currentLessons.length) return;
+
+  const cardsHtml = currentLessons.map((l, idx) => `
+    <div class="bg-surface-container-lowest border border-outline-variant p-5 rounded-2xl flex flex-col justify-between shadow-sm hover:-translate-y-1 hover:shadow-md cursor-pointer transition-all" onclick="openLessonSlide(${idx})">
+      <div>
+        <span class="inline-block px-2.5 py-0.5 bg-surface-container text-primary font-bold text-xs uppercase rounded border border-outline-variant/40">
+          ${l.sign || l.title}
+        </span>
+        <h4 class="font-quicksand font-bold text-base text-on-surface mt-3 mb-1">${escapeHtml(l.title)}</h4>
+        <p class="text-xs text-on-surface-variant leading-relaxed line-clamp-3">${escapeHtml(l.description)}</p>
+      </div>
+      <div class="mt-4 pt-3 border-t border-outline-variant/30 flex items-center justify-between text-xs text-on-surface-variant font-semibold">
+        <span>~${l.estimated_minutes} min</span>
+      </div>
+    </div>
+  `).join("");
+
+  container.innerHTML = `
+    <div class="flex items-center justify-between mb-4 mt-6">
+      <h2 class="font-quicksand font-bold text-lg text-primary">${currentModuleTitle} Lessons</h2>
+      <button class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold bg-surface-container hover:bg-surface-container-high transition-all" onclick="backToModules()">
+        Close Lessons
+      </button>
+    </div>
+    
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      ${lessons.map((l) => `
-        <div class="bg-surface-container-lowest border border-outline-variant p-5 rounded-2xl flex flex-col justify-between shadow-sm">
-          <div>
-            <span class="inline-block px-2.5 py-0.5 bg-surface-container text-primary font-bold text-xs uppercase rounded border border-outline-variant/40">${l.sign || l.title}</span>
-            <h4 class="font-quicksand font-bold text-base text-on-surface mt-3 mb-1">${escapeHtml(l.title)}</h4>
-            <p class="text-xs text-on-surface-variant leading-relaxed line-clamp-3">${escapeHtml(l.description)}</p>
+      ${cardsHtml}
+    </div>
+  `;
+}
+
+function openLessonSlide(index) {
+  activeLessonIndex = index;
+  renderLessonSlideView();
+}
+
+function renderLessonSlideView() {
+  const container = document.getElementById("content-lessons");
+  if (!container || !currentLessons.length) return;
+
+  const currentLesson = currentLessons[activeLessonIndex];
+  const bigSign = escapeHtml(currentLesson.sign || currentLesson.title || "");
+
+  container.innerHTML = `
+    <div class="flex items-center justify-between mb-6 mt-6 slide-header-container">
+      <h2 class="font-quicksand font-bold text-lg text-primary">${currentModuleTitle} Lessons - Slide View</h2>
+      <div class="flex items-center gap-2">
+        <button class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold bg-surface-container hover:bg-surface-container-high transition-all flex items-center gap-1.5" onclick="toggleFullscreenPresentation()">
+          <span class="material-symbols-outlined text-sm font-bold" id="fullscreen-btn-icon">fullscreen</span> <span id="fullscreen-btn-text">Fullscreen</span>
+        </button>
+        <button class="px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold bg-surface-container hover:bg-surface-container-high transition-all flex items-center gap-1.5 btn-back-to-grid" onclick="renderLessonsGrid()">
+          <span class="material-symbols-outlined text-sm font-bold">grid_view</span> Back to Grid
+        </button>
+      </div>
+    </div>
+    
+    <!-- Slide Wrapper -->
+    <div class="flex items-center justify-between gap-6 min-h-[450px] slide-wrapper">
+      <!-- Left Slide Arrow -->
+      <button onclick="previousLessonSlide()" 
+        class="w-12 h-12 rounded-full border border-outline-variant hover:bg-surface-container flex items-center justify-center shrink-0 transition-all shadow-sm slide-arrow-left ${activeLessonIndex === 0 ? 'opacity-30 cursor-not-allowed' : ''}" 
+        ${activeLessonIndex === 0 ? 'disabled' : ''}>
+        <span class="material-symbols-outlined text-2xl font-bold">chevron_left</span>
+      </button>
+      
+      <!-- Active Slide Content -->
+      <div class="flex-1 bg-surface-container-lowest border border-outline-variant rounded-3xl p-8 shadow-sm slide-content-card">
+        <div class="flex items-center justify-between border-b border-outline-variant/30 pb-3 mb-6">
+          <span class="inline-block px-2.5 py-0.5 bg-surface-container text-primary font-bold text-xs uppercase rounded border border-outline-variant/40">
+            Slide ${activeLessonIndex + 1}/${currentLessons.length}
+          </span>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start slide-grid">
+          <!-- Slide Image (Left side) -->
+          <div class="lg:col-span-7 flex justify-center items-center p-6 bg-slate-900 rounded-2xl aspect-video border border-outline-variant shadow-sm relative overflow-hidden slide-media-box" style="max-height: 380px;">
+            ${currentLesson.image_placeholder ? `
+              <img src="${escapeHtml(currentLesson.image_placeholder)}" alt="${bigSign}" class="max-h-full object-contain rounded-xl block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+              <div class="placeholder hidden flex-col items-center justify-center text-center">
+                <div class="font-quicksand font-bold text-6xl text-white mb-2">${bigSign}</div>
+                <p class="text-xs text-outline-variant">Visual sign visualizer placeholder</p>
+              </div>` : `
+              <div class="placeholder flex flex-col items-center justify-center text-center">
+                <div class="font-quicksand font-bold text-6xl text-white mb-2">${bigSign}</div>
+                <p class="text-xs text-outline-variant">Visual sign visualizer placeholder</p>
+              </div>`}
           </div>
-          <div class="mt-4 pt-3 border-t border-outline-variant/30 flex items-center justify-between text-xs text-on-surface-variant font-semibold">
-            <span>~${l.estimated_minutes} min</span>
-            <span>Diff: ${l.difficulty}/3</span>
+          
+          <!-- Slide details (Right side) -->
+          <div class="lg:col-span-5 flex flex-col justify-between min-h-[300px]">
+            <div>
+              <h3 class="font-quicksand font-bold text-2xl text-primary mb-3">${escapeHtml(currentLesson.title)}</h3>
+              <p class="text-sm text-on-surface-variant leading-relaxed mb-6">${escapeHtml(currentLesson.description || "")}</p>
+              ${currentLesson.tips ? `
+                <div class="text-sm text-on-surface font-medium bg-tertiary-fixed/60 border border-outline-variant/40 p-4 rounded-xl">
+                  <strong>Teaching Tip:</strong> ${escapeHtml(currentLesson.tips)}
+                </div>` : ""}
+            </div>
           </div>
-        </div>`).join("")}
-    </div>`;
-  document.getElementById("content-lessons").scrollIntoView({ behavior: "smooth", block: "start" });
+        </div>
+      </div>
+      
+      <!-- Right Slide Arrow -->
+      <button onclick="nextLessonSlide()" 
+        class="w-12 h-12 rounded-full border border-outline-variant hover:bg-surface-container flex items-center justify-center shrink-0 transition-all shadow-sm slide-arrow-right ${activeLessonIndex === currentLessons.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}" 
+        ${activeLessonIndex === currentLessons.length - 1 ? 'disabled' : ''}>
+        <span class="material-symbols-outlined text-2xl font-bold">chevron_right</span>
+      </button>
+    </div>
+  `;
+}
+
+function previousLessonSlide() {
+  if (activeLessonIndex > 0) {
+    activeLessonIndex--;
+    renderLessonSlideView();
+  }
+}
+
+function nextLessonSlide() {
+  if (activeLessonIndex < currentLessons.length - 1) {
+    activeLessonIndex++;
+    renderLessonSlideView();
+  }
+}
+
+function backToModules() {
+  document.getElementById("content-lessons").innerHTML = "";
+  const modulesBox = document.getElementById("content-modules");
+  if (modulesBox) modulesBox.classList.remove("hidden");
+  const libHeader = document.getElementById("library-header");
+  if (libHeader) libHeader.classList.remove("hidden");
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => { });
+  }
+}
+
+function toggleFullscreenPresentation() {
+  const container = document.getElementById("content-lessons");
+  if (!container) return;
+
+  if (!document.fullscreenElement) {
+    container.requestFullscreen().then(() => {
+      updateFullscreenButton(true);
+    }).catch(err => {
+      FSL.toast("Error entering fullscreen: " + err.message, "error");
+    });
+  } else {
+    document.exitFullscreen().then(() => {
+      updateFullscreenButton(false);
+    }).catch(() => { });
+  }
+}
+
+// Fullscreen change listener
+document.addEventListener("fullscreenchange", () => {
+  const isFs = !!document.fullscreenElement;
+  updateFullscreenButton(isFs);
+});
+
+function updateFullscreenButton(isFs) {
+  const icon = document.getElementById("fullscreen-btn-icon");
+  const text = document.getElementById("fullscreen-btn-text");
+  if (icon) icon.textContent = isFs ? "fullscreen_exit" : "fullscreen";
+  if (text) text.textContent = isFs ? "Exit Fullscreen" : "Fullscreen";
 }
 
 function setRecogStatus(text, cls) {
@@ -274,7 +458,7 @@ async function startRecognition() {
 
 function stopRecognition() {
   recognizing = false;
-  if (camera) { try { camera.stop(); } catch (_) {} camera = null; }
+  if (camera) { try { camera.stop(); } catch (_) { } camera = null; }
   hands = null;
   const video = document.getElementById("input-video");
   if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
@@ -337,14 +521,85 @@ async function sendLandmarks(flat) {
 
 function loadProfile() {
   const u = FSL.user || {};
-  const n = document.getElementById("prof-name");
-  const un = document.getElementById("prof-user");
-  const em = document.getElementById("prof-email");
-  if (n) n.value = u.full_name || "";
-  if (un) un.value = u.username || "";
-  if (em) em.value = u.email || "";
+
+  // Split full name into first and last name
+  const fullName = u.full_name || "";
+  const parts = fullName.trim().split(/\s+/);
+  const firstName = parts[0] || "";
+  const lastName = parts.slice(1).join(" ") || "";
+
+  const fnEl = document.getElementById("prof-firstname");
+  const lnEl = document.getElementById("prof-lastname");
+  const unEl = document.getElementById("prof-user");
+  const emEl = document.getElementById("prof-email");
+
+  if (fnEl) fnEl.value = firstName;
+  if (lnEl) lnEl.value = lastName;
+  if (unEl) unEl.value = u.username || "";
+  if (emEl) emEl.value = u.email || "";
+
+  // Update profile display name and avatar letter
+  const avatarBadge = document.getElementById("teacher-avatar-badge");
+  if (avatarBadge) {
+    const pfp = localStorage.getItem("profile_pic_" + u.username);
+    if (pfp) {
+      avatarBadge.innerHTML = `<img src="${pfp}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`;
+    } else {
+      const initial = (u.full_name || u.username || "T").trim().charAt(0).toUpperCase();
+      avatarBadge.textContent = initial;
+    }
+  }
+
+  // Reset password fields
+  ["prof-current-pass", "prof-new-pass", "prof-confirm-pass"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
 }
-function saveProfile() { FSL.toast("Profile settings saved! 💾", "success"); }
+
+async function saveProfile() {
+  const fnEl = document.getElementById("prof-firstname");
+  const lnEl = document.getElementById("prof-lastname");
+  const emEl = document.getElementById("prof-email");
+  const currentPassEl = document.getElementById("prof-current-pass");
+  const newPassEl = document.getElementById("prof-new-pass");
+  const confirmPassEl = document.getElementById("prof-confirm-pass");
+
+  const body = {
+    first_name: fnEl ? fnEl.value.trim() : "",
+    last_name: lnEl ? lnEl.value.trim() : "",
+    email: emEl ? emEl.value.trim() : "",
+  };
+
+  if (newPassEl && newPassEl.value) {
+    if (!currentPassEl || !currentPassEl.value) {
+      FSL.toast("Please enter your current password to change it", "error");
+      return;
+    }
+    if (newPassEl.value !== confirmPassEl.value) {
+      FSL.toast("New passwords do not match", "error");
+      return;
+    }
+    body.current_password = currentPassEl.value;
+    body.new_password = newPassEl.value;
+    body.confirm_new_password = confirmPassEl.value;
+  }
+
+  try {
+    const res = await FSL.api("/auth/profile", {
+      method: "PUT",
+      body,
+    });
+
+    // Update local storage user details
+    FSL.setAuth(localStorage.getItem("fsl_token"), res.user);
+
+    FSL.toast("Profile settings saved! 💾", "success");
+    loadProfile();
+  } catch (err) {
+    FSL.toast(err.message, "error");
+  }
+}
 
 function logout() {
   if (typeof recognizing !== "undefined" && recognizing) stopRecognition();
@@ -477,7 +732,7 @@ function toggleSidebar() {
   const main = document.querySelector("main");
   const isCollapsed = nav.classList.toggle("sidebar-collapsed");
   main.classList.toggle("main-expanded", isCollapsed);
-  
+
   const icon = document.getElementById("toggle-sidebar-icon");
   if (icon) {
     icon.textContent = isCollapsed ? "chevron_right" : "chevron_left";
@@ -486,7 +741,7 @@ function toggleSidebar() {
 }
 
 // Initialize sidebar state on page load
-(function() {
+(function () {
   if (localStorage.getItem("sidebar-collapsed") === "true") {
     const nav = document.querySelector(".sidebar-nav");
     const main = document.querySelector("main");
@@ -500,18 +755,16 @@ function toggleSidebar() {
 })();
 
 // Load Signy mascot in sidebar overview
-(function() {
-  const sidebar = document.querySelector(".sidebar-nav");
-  if (sidebar) {
-    const div = document.createElement("div");
-    div.className = "px-4 mt-6 text-center border-t border-outline-variant/30 pt-4 sidebar-brand";
-    div.innerHTML = `
+(function () {
+  const container = document.getElementById("sidebar-mascot-container");
+  if (container) {
+    container.className = "px-4 mb-4 text-center border-t border-outline-variant/30 pt-4 sidebar-brand";
+    container.innerHTML = `
       <div class="mb-2 bg-surface-container p-3 rounded-2xl border border-outline-variant/40 text-xs font-semibold text-on-surface-variant leading-relaxed">
         Let's help Pagadian students master sign language today!
       </div>
       ${FSL.getSignySVG("neutral")}
     `;
-    sidebar.appendChild(div);
   }
 })();
 
@@ -602,7 +855,7 @@ async function deleteClassroomConfirm() {
     });
     FSL.toast("Classroom deleted successfully!");
     closeDeleteModal();
-    
+
     if (selectedClassroomId === +id) {
       selectedClassroomId = null;
       const sel = document.getElementById("classroom-select");
@@ -610,11 +863,18 @@ async function deleteClassroomConfirm() {
       loadStudents();
       loadClassroomRoster(null);
     }
-    
+
     await loadOverview();
   } catch (err) {
     FSL.toast(err.message, "error");
   }
+}
+
+function backToClassrooms() {
+  selectedClassroomId = null;
+  const sel = document.getElementById("classroom-select");
+  if (sel) sel.value = "";
+  loadClassroomRoster(null);
 }
 
 // Load Detailed Classroom Roster in view-students pane
@@ -625,18 +885,27 @@ async function loadClassroomRoster(id) {
 
   if (!id) {
     section.classList.add("hidden");
+    const listGrid = document.getElementById("classrooms-list");
+    const topBackBtn = document.getElementById("top-back-btn");
+    if (listGrid) listGrid.classList.remove("hidden");
+    if (topBackBtn) topBackBtn.classList.add("hidden");
     return;
   }
-  
+
   const c = classrooms.find(x => x.id == id);
   if (c) {
     document.getElementById("roster-classroom-title").textContent = c.name + " Roster";
     document.getElementById("roster-classroom-code").textContent = "Code: " + c.code;
   }
-  
+
   section.classList.remove("hidden");
+  const listGrid = document.getElementById("classrooms-list");
+  const topBackBtn = document.getElementById("top-back-btn");
+  if (listGrid) listGrid.classList.add("hidden");
+  if (topBackBtn) topBackBtn.classList.remove("hidden");
+
   tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8"><div class="spinner mx-auto"></div></td></tr>`;
-  
+
   try {
     const students = await FSL.api(`/classrooms/${id}/students`);
     if (!students.length) {
@@ -644,7 +913,7 @@ async function loadClassroomRoster(id) {
       return;
     }
     let modules = [];
-    try { modules = await FSL.api("/modules"); } catch (_) {}
+    try { modules = await FSL.api("/modules"); } catch (_) { }
     const lessonMap = {};
     for (const m of modules) {
       try {
@@ -703,10 +972,10 @@ async function loadClassroomRoster(id) {
 
 loadOverview();
 loadContent();
-showView('overview');
+showView('content');
 
 // ========== Event delegation for student action buttons ==========
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
   const editBtn = e.target.closest('.btn-edit-student');
   if (editBtn) {
     e.stopPropagation();

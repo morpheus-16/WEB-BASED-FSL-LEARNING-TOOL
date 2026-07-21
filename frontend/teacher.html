@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-  <title>SignWise | Teacher Dashboard</title>
+  <title>FSL Learn | Teacher Dashboard</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link
     href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&amp;family=Inter:wght@100..900&amp;display=swap"
@@ -124,7 +124,7 @@
     <div class="flex items-center gap-4">
       <a href="/teacher.html"
         class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary flex items-center gap-2">
-        <span class="material-symbols-outlined text-primary text-2xl font-bold">sign_language</span> SignWise
+        <span class="material-symbols-outlined text-primary text-2xl font-bold">sign_language</span> FSL Learn
       </a>
     </div>
     <div class="flex items-center gap-6">
@@ -152,7 +152,7 @@
     class="hidden lg:flex flex-col h-screen fixed left-0 top-0 border-r border-outline-variant pt-20 pb-8 bg-surface-container-low w-64 sidebar-nav">
     <div class="px-4 mb-6 flex items-center justify-between gap-1">
       <div class="sidebar-brand transition-all overflow-hidden">
-        <h2 class="font-headline-md text-headline-md font-bold text-primary whitespace-nowrap">SignWise</h2>
+        <h2 class="font-headline-md text-headline-md font-bold text-primary whitespace-nowrap">FSL Learn</h2>
         <p class="text-on-surface-variant text-label-sm whitespace-nowrap">Learning Portal</p>
       </div>
       <button id="btn-toggle-sidebar"
@@ -164,27 +164,15 @@
     <div class="flex-1 flex flex-col gap-1">
       <button
         class="sidebar-nav-item flex items-center gap-3 bg-primary-container text-on-primary-container rounded-xl px-4 py-3 mx-2 transition-all active"
-        data-view="overview" onclick="showView('overview', this)">
-        <span class="material-symbols-outlined filled-icon">dashboard</span>
-        <span class="font-label-md text-label-md sidebar-text">Dashboard</span>
+        data-view="content" onclick="showView('content', this)">
+        <span class="material-symbols-outlined filled-icon">menu_book</span>
+        <span class="font-label-md text-label-md sidebar-text">FSL Lessons</span>
       </button>
       <button
         class="sidebar-nav-item flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-xl transition-all"
-        data-view="students" onclick="showView('students', this)">
+        data-view="students" onclick="backToClassrooms(); showView('students', this)">
         <span class="material-symbols-outlined">school</span>
         <span class="font-label-md text-label-md sidebar-text">Classrooms</span>
-      </button>
-      <button
-        class="sidebar-nav-item flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-xl transition-all"
-        data-view="content" onclick="showView('content', this)">
-        <span class="material-symbols-outlined">local_library</span>
-        <span class="font-label-md text-label-md sidebar-text">Library</span>
-      </button>
-      <button
-        class="sidebar-nav-item flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-xl transition-all"
-        data-view="recognize" onclick="showView('recognize', this)">
-        <span class="material-symbols-outlined">videocam</span>
-        <span class="font-label-md text-label-md sidebar-text">Live Demo</span>
       </button>
       <button
         class="sidebar-nav-item flex items-center gap-3 text-on-surface-variant px-4 py-3 mx-2 hover:bg-surface-variant rounded-xl transition-all"
@@ -193,6 +181,8 @@
         <span class="font-label-md text-label-md sidebar-text">Profile</span>
       </button>
     </div>
+    <!-- Signy Mascot Container -->
+    <div id="sidebar-mascot-container"></div>
     <div class="px-4">
       <button
         class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-variant text-on-surface-variant font-label-md hover:bg-outline-variant transition-colors sidebar-logout-btn"
@@ -347,22 +337,25 @@
 
     <!-- VIEW CLASSROOMS (ROSTER DIRECTORY VIEW) -->
     <div id="view-students" class="hidden space-y-6">
-      <div
+      <div id="classrooms-header"
         class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/30 pb-4">
         <div>
           <h1 class="font-headline-lg text-headline-lg text-on-surface">Classrooms & Roster</h1>
-          <p class="text-body-md text-on-surface-variant">Configure classroom folders and add student logins.</p>
+          <p class="text-body-md text-on-surface-variant mt-1">Configure classroom folders and add student logins.</p>
         </div>
-        <button
-          class="btn-tactile flex items-center justify-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-full font-label-md text-white font-bold animate-[fade-in_0.5s]"
-          type="button" onclick="openAddStudentModal()">
-          <span class="material-symbols-outlined">person_add</span> Add Student Account
-        </button>
+        <div class="flex items-center gap-3">
+          <button id="top-back-btn"
+            class="hidden btn-tactile flex items-center justify-center gap-1.5 px-4 py-2 border border-outline-variant hover:bg-surface-container rounded-xl font-label-md text-on-surface font-bold text-xs transition-all"
+            onclick="backToClassrooms()">
+            <span class="material-symbols-outlined text-sm font-bold">arrow_back</span> Back to Classrooms
+          </button>
+        </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="classrooms-list"></div>
 
       <!-- Dedicated Classroom Roster Section -->
-      <div id="classroom-roster-section" class="hidden bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden shadow-sm mt-8 animate-[fade-in_0.3s]">
+      <div id="classroom-roster-section"
+        class="hidden bg-surface-container-lowest rounded-2xl border border-outline-variant overflow-hidden shadow-sm mt-8 animate-[fade-in_0.3s]">
         <div class="px-md py-4 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
           <div>
             <h2 class="font-headline-md text-headline-md text-primary" id="roster-classroom-title">Classroom Roster</h2>
@@ -377,7 +370,8 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse min-w-[650px]">
             <thead>
-              <tr class="bg-surface-container-low text-on-surface-variant font-label-md uppercase text-[10px] tracking-widest border-b border-outline-variant">
+              <tr
+                class="bg-surface-container-low text-on-surface-variant font-label-md uppercase text-[10px] tracking-widest border-b border-outline-variant">
                 <th class="px-md py-4 font-semibold">Student Name</th>
                 <th class="px-md py-4 font-semibold">Username</th>
                 <th class="px-md py-4 font-semibold" colspan="2">Current Progress</th>
@@ -387,7 +381,8 @@
             </thead>
             <tbody class="divide-y divide-outline-variant" id="classroom-students-tbody">
               <tr>
-                <td colspan="5" class="text-center py-8 text-on-surface-variant font-medium">Select a classroom to load roster.</td>
+                <td colspan="5" class="text-center py-8 text-on-surface-variant font-medium">Select a classroom to load
+                  roster.</td>
               </tr>
             </tbody>
           </table>
@@ -398,7 +393,7 @@
 
     <!-- VIEW LIBRARY (FSL LESSON INDEX) -->
     <div id="view-content" class="hidden space-y-6">
-      <div class="border-b border-outline-variant/30 pb-4">
+      <div class="border-b border-outline-variant/30 pb-4" id="library-header">
         <h1 class="font-headline-lg text-headline-lg text-on-surface">Sign Library</h1>
         <p class="text-body-md text-on-surface-variant">View curriculum sign descriptions and difficulties.</p>
       </div>
@@ -460,41 +455,116 @@
       </div>
     </div>
     <!-- VIEW PROFILE (SETTINGS) -->
-    <div id="view-profile" class="hidden space-y-6 max-w-xl mx-auto w-full">
-      <div class="border-b border-outline-variant/30 pb-4">
-        <h1 class="font-headline-lg text-headline-lg text-on-surface text-center">Profile Settings</h1>
-        <p class="text-body-md text-on-surface-variant text-center">Update your administrator details and password
-          credentials.</p>
+    <div id="view-profile" class="hidden space-y-4 w-full">
+      <div class="border-b border-outline-variant/30 pb-3">
+        <h1 class="font-headline-lg text-headline-lg text-on-surface text-xl">Profile Settings</h1>
+        <p class="text-xs text-on-surface-variant">Update your administrator details and password credentials.</p>
       </div>
-      <div class="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 space-y-4 shadow-sm w-full">
-        <div class="space-y-1">
-          <label class="text-xs font-bold text-on-surface" for="prof-name">Full Name</label>
-          <input
-            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
-            id="prof-name" />
+      
+      <!-- Grid Layout: Profile & Security -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        
+        <!-- Left Column: Account Details -->
+        <div class="lg:col-span-7 bg-surface-container-lowest border border-outline-variant rounded-2xl p-4 space-y-4 shadow-sm">
+          
+          <div class="flex items-center gap-2 border-b border-outline-variant/35 pb-3">
+            <span class="material-symbols-outlined text-primary text-xl font-bold">person</span>
+            <div>
+              <h2 class="font-headline-md text-headline-md text-on-surface leading-tight text-sm">Account Information</h2>
+              <p class="text-[10px] text-on-surface-variant">Edit your basic administrator profile details.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center border-b border-outline-variant/30 pb-4">
+            <!-- Clickable Avatar -->
+            <div class="md:col-span-4 flex flex-col items-center justify-center text-center">
+              <div class="relative group cursor-pointer w-20 h-20 rounded-full border border-primary/20 shadow-sm overflow-hidden flex items-center justify-center bg-primary/10 text-primary font-quicksand font-bold text-3xl"
+                   onclick="document.getElementById('teacher-avatar-input').click()">
+                <div id="teacher-avatar-badge" class="w-full h-full flex items-center justify-center">T</div>
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-150 rounded-full">
+                  <span class="material-symbols-outlined text-white text-xl">photo_camera</span>
+                </div>
+              </div>
+              <input type="file" id="teacher-avatar-input" class="hidden" accept="image/*" onchange="uploadAvatar(this, 'teacher')" />
+              <button type="button" class="text-[10px] text-primary font-bold mt-1 uppercase tracking-wider hover:underline" onclick="document.getElementById('teacher-avatar-input').click()">
+                Change Photo
+              </button>
+            </div>
+            
+            <!-- First/Last Name -->
+            <div class="md:col-span-8 space-y-2">
+              <div class="space-y-1">
+                <label class="text-[11px] font-bold text-on-surface" for="prof-firstname">First Name</label>
+                <input
+                  class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-xs"
+                  id="prof-firstname" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-bold text-on-surface" for="prof-lastname">Last Name</label>
+                <input
+                  class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-xs"
+                  id="prof-lastname" />
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-on-surface" for="prof-email">Email Address</label>
+              <input
+                class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-xs"
+                id="prof-email" type="email" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-on-surface" for="prof-user">Username</label>
+              <input
+                class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-xs opacity-60"
+                id="prof-user" disabled />
+            </div>
+          </div>
         </div>
-        <div class="space-y-1">
-          <label class="text-xs font-bold text-on-surface" for="prof-user">Username</label>
-          <input
-            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm opacity-60"
-            id="prof-user" disabled />
+
+        <!-- Right Column: Change Password -->
+        <div class="lg:col-span-5 bg-surface-container-lowest border border-outline-variant rounded-2xl p-4 space-y-4 shadow-sm">
+          
+          <div class="flex items-center gap-3 border-b border-outline-variant/35 pb-3">
+            <span class="material-symbols-outlined text-primary text-xl font-bold">lock</span>
+            <div>
+              <h2 class="font-headline-md text-headline-md text-on-surface leading-tight text-sm">Security Settings</h2>
+              <p class="text-[10px] text-on-surface-variant">Update your account access password.</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-on-surface" for="prof-current-pass">Current Password</label>
+              <input type="password"
+                class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-xs"
+                id="prof-current-pass" placeholder="Enter current password" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-on-surface" for="prof-new-pass">New Password</label>
+              <input type="password"
+                class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-xs"
+                id="prof-new-pass" placeholder="Enter new password" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-on-surface" for="prof-confirm-pass">Confirm New Password</label>
+              <input type="password"
+                class="w-full h-10 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-xs"
+                id="prof-confirm-pass" placeholder="Confirm new password" />
+            </div>
+          </div>
         </div>
-        <div class="space-y-1">
-          <label class="text-xs font-bold text-on-surface" for="prof-email">Email Address</label>
-          <input
-            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
-            id="prof-email" type="email" />
-        </div>
-        <div class="space-y-1">
-          <label class="text-xs font-bold text-on-surface" for="prof-pass">New Password (optional)</label>
-          <input type="password"
-            class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
-            id="prof-pass" placeholder="Leave blank to keep current password" />
-        </div>
+      </div>
+
+      <!-- Action Button Panel (Align Right) -->
+      <div class="flex justify-end">
         <button
-          class="w-full h-11 bg-primary text-white font-semibold text-xs rounded-lg btn-tactile uppercase tracking-wider flex items-center justify-center mt-6"
+          class="px-6 h-10 bg-primary text-white font-semibold text-xs rounded-lg btn-tactile uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm"
           onclick="saveProfile()">
-          Save profile settings
+          <span class="material-symbols-outlined text-sm">save</span>
+          Save Profile Settings
         </button>
       </div>
     </div>
@@ -504,20 +574,15 @@
   <!-- Mobile Bottom Nav Bar (Bottom) -->
   <nav
     class="lg:hidden fixed bottom-0 left-0 w-full h-16 bg-surface-container-highest border-t border-outline-variant flex items-center justify-around z-50">
-    <button class="bottom-nav-item flex flex-col items-center gap-1 text-primary active" data-view="overview"
-      onclick="showView('overview', this)">
-      <span class="material-symbols-outlined filled-icon">dashboard</span>
-      <span class="text-[10px] font-bold">Dashboard</span>
+    <button class="bottom-nav-item flex flex-col items-center gap-1 text-primary active" data-view="content"
+      onclick="showView('content', this)">
+      <span class="material-symbols-outlined filled-icon">menu_book</span>
+      <span class="text-[10px] font-bold">FSL Lessons</span>
     </button>
     <button class="bottom-nav-item flex flex-col items-center gap-1 text-on-surface-variant" data-view="students"
-      onclick="showView('students', this)">
+      onclick="backToClassrooms(); showView('students', this)">
       <span class="material-symbols-outlined">school</span>
       <span class="text-[10px] font-bold">Classes</span>
-    </button>
-    <button class="bottom-nav-item flex flex-col items-center gap-1 text-on-surface-variant" data-view="content"
-      onclick="showView('content', this)">
-      <span class="material-symbols-outlined">local_library</span>
-      <span class="text-[10px] font-bold">Library</span>
     </button>
     <button class="bottom-nav-item flex flex-col items-center gap-1 text-on-surface-variant" data-view="profile"
       onclick="showView('profile', this)">
@@ -561,7 +626,7 @@
       <h2 class="font-headline-md text-headline-md text-primary mb-1 flex items-center gap-1.5"><span
           class="material-symbols-outlined text-2xl">person_add</span> Add Student</h2>
       <p class="text-xs text-on-surface-variant mb-4">Create a student account. They will enroll in the selected
-          classroom automatically.</p>
+        classroom automatically.</p>
       <form onsubmit="createStudent(event)" class="space-y-3">
         <div class="space-y-1">
           <label class="text-xs font-bold text-on-surface">Full Name</label>
@@ -631,7 +696,8 @@
             class="px-4 py-2 border border-outline rounded-lg text-xs font-bold hover:bg-surface-container transition-colors"
             onclick="closeEditModal()">Cancel</button>
           <button type="submit"
-            class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary-container transition-colors shadow-sm shadow-primary/20">Save Changes</button>
+            class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary-container transition-colors shadow-sm shadow-primary/20">Save
+            Changes</button>
         </div>
       </form>
     </div>
@@ -642,7 +708,9 @@
     <div class="modal-card max-w-sm">
       <h2 class="font-headline-md text-headline-md text-error mb-2 flex items-center gap-1.5"><span
           class="material-symbols-outlined text-2xl">warning</span> Delete Classroom</h2>
-      <p class="text-xs text-on-surface-variant mb-6 leading-relaxed">Are you sure you want to delete <strong id="delete-classroom-name-display" class="text-on-surface"></strong>? This action is permanent and will delete all student records and progress inside this classroom.</p>
+      <p class="text-xs text-on-surface-variant mb-6 leading-relaxed">Are you sure you want to delete <strong
+          id="delete-classroom-name-display" class="text-on-surface"></strong>? This action is permanent and will delete
+        all student records and progress inside this classroom.</p>
       <input type="hidden" id="delete-classroom-id" />
       <div class="flex gap-2 justify-end">
         <button type="button"
@@ -660,7 +728,8 @@
     <div class="modal-card">
       <h2 class="font-headline-md text-headline-md text-primary mb-1 flex items-center gap-1.5"><span
           class="material-symbols-outlined text-2xl">manage_accounts</span> Edit Student</h2>
-      <p class="text-xs text-on-surface-variant mb-4">Update the student's name, email address, or set a new password.</p>
+      <p class="text-xs text-on-surface-variant mb-4">Update the student's name, email address, or set a new password.
+      </p>
       <form onsubmit="saveStudentEdit(event)" class="space-y-3">
         <input type="hidden" id="edit-student-id" />
         <input type="hidden" id="edit-student-classroom-id" />
@@ -683,7 +752,8 @@
             id="edit-student-email" name="email" type="email" placeholder="student@school.edu.ph" />
         </div>
         <div class="space-y-1">
-          <label class="text-xs font-bold text-on-surface" for="edit-student-pass">New Password (leave blank to keep current)</label>
+          <label class="text-xs font-bold text-on-surface" for="edit-student-pass">New Password (leave blank to keep
+            current)</label>
           <input type="password"
             class="w-full h-11 px-3 rounded-lg border border-outline bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary outline-none text-sm"
             id="edit-student-pass" name="password" placeholder="Leave blank to keep current" />
@@ -693,7 +763,8 @@
             class="px-4 py-2 border border-outline rounded-lg text-xs font-bold hover:bg-surface-container transition-colors"
             onclick="closeEditStudentModal()">Cancel</button>
           <button type="submit"
-            class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary-container transition-colors shadow-sm shadow-primary/20">Save Changes</button>
+            class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primary-container transition-colors shadow-sm shadow-primary/20">Save
+            Changes</button>
         </div>
       </form>
     </div>
@@ -704,7 +775,9 @@
     <div class="modal-card max-w-sm">
       <h2 class="font-headline-md text-headline-md text-error mb-2 flex items-center gap-1.5"><span
           class="material-symbols-outlined text-2xl">warning</span> Remove Student</h2>
-      <p class="text-xs text-on-surface-variant mb-6 leading-relaxed">Are you sure you want to permanently delete <strong id="delete-student-name-display" class="text-on-surface"></strong>? This will remove their account, progress, and quiz records. This action cannot be undone.</p>
+      <p class="text-xs text-on-surface-variant mb-6 leading-relaxed">Are you sure you want to permanently delete
+        <strong id="delete-student-name-display" class="text-on-surface"></strong>? This will remove their account,
+        progress, and quiz records. This action cannot be undone.</p>
       <input type="hidden" id="delete-student-id" />
       <input type="hidden" id="delete-student-classroom-id" />
       <div class="flex gap-2 justify-end">
